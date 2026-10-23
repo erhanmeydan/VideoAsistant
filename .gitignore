@@ -17,6 +17,8 @@ xcuserdata/
 secrets.json
 
 # Uygulama çalışma alanı / model dosyaları
+# Not: "models/" yazılırsa core.ignorecase=true yüzünden VideoAsistan/Models/
+# kaynak klasörünü de yok sayar; bu yüzden kök dizine sabitlenmiştir.
 VideoAsistant.work/
-models/
+/models/
 *.bin
