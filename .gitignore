@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# XcodeGen tarafından üretilen proje depoya işlenir,
+# ancak kullanıcıya özel dosyalar (xcuserdata) yukarıda ignore edilir.
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Gizli bilgiler (API anahtarları vb. asla depoya girmez)
+.env
+.env.*
+*.key
+secrets.json
+
+# Uygulama çalışma alanı / model dosyaları
+VideoAsistant.work/
+models/
+*.bin
