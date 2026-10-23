@@ -82,6 +82,15 @@ final class PipelineController {
         pendingVideoURL = nil
     }
 
+    /// Uygulama ilk açılışta anahtar yoksa kullanıcıdan ister.
+    func requestAPIKeyIfNeeded() {
+        guard !isAPIKeySheetPresented else { return }
+        let source = APIKeyProvider.resolveSource()
+        if source == .none {
+            isAPIKeySheetPresented = true
+        }
+    }
+
     // MARK: - Akış
 
     private func begin(with url: URL, apiKey: String) {

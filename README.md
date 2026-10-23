@@ -2,22 +2,27 @@
 
 Türkçe YouTube videoları için **altyazı (SRT), bölüm başlıkları, açıklama, başlık önerileri ve etiketler** üreten yerel macOS uygulaması.
 
-Video döküşü (Whisper) tamamen **yerelde** çalışır; sadece düzeltilmiş metinler MiniMax M3.1 Flash modeline gönderilir.
+Video döküşü (Whisper) tamamen **yerelde** çalışır; ağa sadece düzeltilmiş metinler gider.
+
+```
+mp4 / mov  →  ffmpeg (ses)  →  whisper.cpp (yerel Türkçe döküş)  →  MiniMax M3.1 Flash  →  5 sekme + 5 dosya
+```
 
 ## Özellikler
 
-- Pencereye mp4/mov sürükle-bırak → ses çıkarma → Türkçe yazıya çevirme → metin üretimi
-- Zaman damgaları korunmuş, yazım ve noktalama düzeltilmiş SRT
-- YouTube bölüm başlıkları (ilk bölüm `00:00`, en az 3 bölüm, her bölüm en az 10 saniye)
-- 2-3 paragraflık açıklama, 5 başlık önerisi, 15 etiket (virgüllerle birlikte en fazla 500 karakter)
-- Her sekmede "Kopyala" düğmesi; sonuçlar videonun bulunduğu klasöre dosya olarak da yazılır
-- İşlem sonunda API yanıtındaki gerçek giriş/çıktı token sayıları gösterilir
+- Pencereye mp4/mov **sürükle-bırak** (veya "Dosya seç")
+- Aynı pencerede canlı adım listesi: ses çıkarma → yazıya çevirme → metin hazırlama → dosya kaydetme
+- **Zaman damgaları korunur**: LLM yalnızca metni düzeltir, zamanlama Whisper çıktısından gelir
+- YouTube bölüm başlıkları: ilk bölüm `00:00`, en az 3 bölüm, bölümler arası en az 10 saniye
+- 2-3 paragraflık sade ve samimi açıklama, 5 başlık önerisi, 15 etiket (virgüllerle birlikte ≤ 500 karakter)
+- Her sekmede **Kopyala** düğmesi
+- Sonuçlar videonun bulunduğu klasöre `video-adı-altyazi.srt`, `-bolumler.txt`, `-aciklama.txt`, `-basliklar.txt`, `-etiketler.txt` olarak yazılır
+- İşlem sonunda API yanıtındaki **gerçek** giriş/çıktı token sayıları gösterilir
 
 ## Gereksinimler
 
-- macOS 14 (Big Sur veya üzeri), Xcode 15+
-- [Homebrew](https://brew.sh): `ffmpeg` ve `whisper.cpp`
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
+- macOS 14 veya üzeri, Xcode 15+
+- [Homebrew](https://brew.sh)
 
 ```bash
 brew install ffmpeg whisper.cpp xcodegen
@@ -25,7 +30,8 @@ brew install ffmpeg whisper.cpp xcodegen
 
 ## Whisper modeli
 
-Türkçe için `large-v3-turbo` modeli kullanılır (~1,6 GB):
+Türkçe için `large-v3-turbo` modeli kullanılır (~1,6 GB). Uygulama modeli
+`~/Library/Application Support/VideoAsistant/models/` klasöründe arar:
 
 ```bash
 mkdir -p ~/Library/Application\ Support/VideoAsistant/models
@@ -35,11 +41,18 @@ curl -L -C - -o ~/Library/Application\ Support/VideoAsistant/models/ggml-large-v
 
 ## Derleme
 
+Proje XcodeGen ile üretilir; `project.yml` tek doğruluk kaynağıdır.
+
 ```bash
 xcodegen generate
 xcodebuild -project VideoAsistant.xcodeproj -scheme VideoAsistant \
   -configuration Debug -destination 'platform=macOS,arch=arm64' build
 ```
+
+Üretilen uygulama: `build/Debug/VideoAsistant.app`
+
+> Uygulama **sandbox kapalı** derlenir; `ffmpeg` ve `whisper-cli` alt süreçlerini
+> çalıştırabilmesi için gereklidir.
 
 ## API anahtarı
 
@@ -49,16 +62,60 @@ MiniMax API anahtarı **koda gömülmez**. Çözümleme sırası:
 2. macOS Keychain (`com.erhanmeydan.videoasistan` / `minimax-api-key`)
 3. Yoksa uygulama ilk açılışta sorar ve Keychain'e kaydeder
 
+Keychain kaydı varsayılan güvenli erişim denetimiyle tutulur. Ad-hoc imzalı
+geliştirme ikililerinde yeniden derleme sonrası anahtar okunamayabilir
+(`errSecAuthFailed`); bu durumda `MINIMAX_API_KEY` tanımlamak veya anahtarı
+uygulamadan tekrar girmek yeterlidir.
+
 ## Komut satırı testleri
 
 ```bash
-# Araç/model/çıktı doğrulamaları
+# Araç, model ve dönüşüm doğrulamaları
 build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --selfcheck "video.mp4"
 
-# Uçtan uca çalıştırma (ffmpeg → whisper → MiniMax → dosya yazımı)
+# Yalnızca yerel kısım (ffmpeg + whisper.cpp)
+build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --transcribe "video.mp4"
+
+# MiniMax bağlantı testi
+build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --apitest "kısa bir tanıtım"
+
+# Uçtan uca: ffmpeg → whisper → MiniMax → dosya yazımı
 build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --smoke "video.mp4"
+```
+
+Hepsi tek komutta:
+
+```bash
+./Tools/smoke_test.sh "video.mp4"
+```
+
+## Nasıl çalışır
+
+1. **Ses çıkarma** — `ffmpeg` ile 16 kHz mono WAV.
+2. **Yazıya çevirme** — `whisper-cli -l tr -ml 80 -sow` ile kelime sınırında bölünmüş,
+   zaman damgalı Türkçe döküş. Ön ipucu olarak kanalın teknik terimleri verilir.
+3. **Altyazı düzeltme** — segmentler 60'lık gruplar hâlinde MiniMax'e gönderilir;
+   model yalnızca metin döndürür, zaman damgaları kod tarafında korunur.
+4. **Bölüm başlıkları** — ayrı bir çağrı; kurallar koda gömülü olarak doğrulanır.
+5. **Açıklama / başlıklar / etiketler** — ayrı bir çağrı; etiketler 500 karakter
+   sınırına normalize edilir, uzun tireler temizlenir.
+6. **Dosyalar** — sonuçlar videonun klasörüne yazılır.
+
+Her API çağrısının `usage` alanındaki gerçek token sayıları toplanır ve pencerede
+giriş/çıktı olarak ayrı ayrı gösterilir.
+
+## Proje yapısı
+
+```
+VideoAsistant/
+  App/        uygulama girişi, yollar, komut satırı modları
+  Models/     veri tipleri
+  Services/   keychain, ffmpeg, whisper, MiniMax istemcisi, metin dönüşümleri
+  Pipeline/   iş akışı denetleyicisi
+  Views/      SwiftUI arayüzü
+Tools/        test betikleri
 ```
 
 ## Lisans
 
-MIT
+MIT — bkz. [LICENSE](LICENSE).

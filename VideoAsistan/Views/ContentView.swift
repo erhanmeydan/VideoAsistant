@@ -40,6 +40,9 @@ struct ContentView: View {
                 controller.saveAPIKey(key)
             }
         }
+        .onAppear {
+            controller.requestAPIKeyIfNeeded()
+        }
     }
 
     private var failureView: some View {
