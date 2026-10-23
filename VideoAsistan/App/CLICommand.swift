@@ -9,6 +9,8 @@ enum CLICommand {
     case selfcheck(videoPath: String?)
     /// MiniMax API bağlantı testi.
     case apiTest(prompt: String)
+    /// Ses çıkarma ve yerel yazıya çevirme testi.
+    case transcribe(videoPath: String)
 
     /// Komut satırı argümanlarından komutu çözer (komut yoksa nil).
     static func parse(arguments: [String]) -> CLICommand? {
@@ -20,6 +22,12 @@ enum CLICommand {
             case "--selfcheck":
                 videoPath = iterator.next()
                 return .selfcheck(videoPath: videoPath)
+            case "--transcribe":
+                guard let path = iterator.next() else {
+                    print("HATA: --transcribe için video yolu gerekli. Kullanım: --transcribe <video.mp4>")
+                    return nil
+                }
+                return .transcribe(videoPath: path)
             case "--apitest":
                 var prompt = "Kısa bir Türkçe tanıtım cümlesi yaz."
                 if let next = iterator.next(), !next.hasPrefix("--") {
@@ -56,6 +64,8 @@ enum CLICommand {
             return SelfCheck.run(videoPath: videoPath)
         case .apiTest(let prompt):
             return await ApiTestRunner.run(prompt: prompt)
+        case .transcribe(let videoPath):
+            return await TranscribeRunner.run(videoPath: videoPath)
         }
     }
 }
