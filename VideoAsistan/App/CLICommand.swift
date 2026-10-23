@@ -7,6 +7,8 @@ import Foundation
 enum CLICommand {
     /// Araç, model ve çıktı doğrulamaları.
     case selfcheck(videoPath: String?)
+    /// MiniMax API bağlantı testi.
+    case apiTest(prompt: String)
 
     /// Komut satırı argümanlarından komutu çözer (komut yoksa nil).
     static func parse(arguments: [String]) -> CLICommand? {
@@ -18,6 +20,12 @@ enum CLICommand {
             case "--selfcheck":
                 videoPath = iterator.next()
                 return .selfcheck(videoPath: videoPath)
+            case "--apitest":
+                var prompt = "Kısa bir Türkçe tanıtım cümlesi yaz."
+                if let next = iterator.next(), !next.hasPrefix("--") {
+                    prompt = next
+                }
+                return .apiTest(prompt: prompt)
             default:
                 continue
             }
@@ -26,17 +34,19 @@ enum CLICommand {
     }
 
     /// Komutu çalıştırır ve çıkış kodunu döndürür (0 = başarılı).
+    ///
+    /// Ana iş parçacığı bekleme sırasında boş bırakılmaz; döngü çalıştırılarak
+    /// URLSession geri çağrılarının ve bağlantı izlemenin ilerlemesi sağlanır.
     static func run(_ command: CLICommand) -> Int32 {
         let box = ExitCodeBox()
-        let semaphore = DispatchSemaphore(value: 0)
-
         Task.detached(priority: .userInitiated) {
             let code = await perform(command)
             box.set(code)
-            semaphore.signal()
         }
 
-        semaphore.wait()
+        while !box.isFinished {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
+        }
         return box.value
     }
 
@@ -44,6 +54,8 @@ enum CLICommand {
         switch command {
         case .selfcheck(let videoPath):
             return SelfCheck.run(videoPath: videoPath)
+        case .apiTest(let prompt):
+            return await ApiTestRunner.run(prompt: prompt)
         }
     }
 }
@@ -52,6 +64,7 @@ enum CLICommand {
 final class ExitCodeBox: @unchecked Sendable {
     private let lock = NSLock()
     private var stored: Int32 = 1
+    private var finished = false
 
     var value: Int32 {
         lock.lock()
@@ -59,9 +72,16 @@ final class ExitCodeBox: @unchecked Sendable {
         return stored
     }
 
+    var isFinished: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return finished
+    }
+
     func set(_ code: Int32) {
         lock.lock()
         defer { lock.unlock() }
         stored = code
+        finished = true
     }
 }
