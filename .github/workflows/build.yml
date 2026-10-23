@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Derle
+    runs-on: macos-latest
+
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: XcodeGen kur
+        run: brew install xcodegen
+
+      - name: Projeyi üret
+        run: xcodegen generate
+
+      - name: Uygulamayı derle
+        run: |
+          xcodebuild -project VideoAsistant.xcodeproj \
+            -scheme VideoAsistant \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            build
