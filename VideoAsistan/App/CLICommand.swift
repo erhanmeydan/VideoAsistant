@@ -11,6 +11,8 @@ enum CLICommand {
     case apiTest(prompt: String)
     /// Ses çıkarma ve yerel yazıya çevirme testi.
     case transcribe(videoPath: String)
+    /// Uçtan uca çalıştırma (ffmpeg → whisper → MiniMax → dosya yazımı).
+    case smoke(videoPath: String)
 
     /// Komut satırı argümanlarından komutu çözer (komut yoksa nil).
     static func parse(arguments: [String]) -> CLICommand? {
@@ -28,6 +30,12 @@ enum CLICommand {
                     return nil
                 }
                 return .transcribe(videoPath: path)
+            case "--smoke":
+                guard let path = iterator.next() else {
+                    print("HATA: --smoke için video yolu gerekli. Kullanım: --smoke <video.mp4>")
+                    return nil
+                }
+                return .smoke(videoPath: path)
             case "--apitest":
                 var prompt = "Kısa bir Türkçe tanıtım cümlesi yaz."
                 if let next = iterator.next(), !next.hasPrefix("--") {
@@ -66,6 +74,8 @@ enum CLICommand {
             return await ApiTestRunner.run(prompt: prompt)
         case .transcribe(let videoPath):
             return await TranscribeRunner.run(videoPath: videoPath)
+        case .smoke(let videoPath):
+            return await SmokeRunner.run(videoPath: videoPath)
         }
     }
 }
