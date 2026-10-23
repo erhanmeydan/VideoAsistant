@@ -1,5 +1,9 @@
 # VideoAsistan
 
+<p align="center">
+  <img src="Resources/AppIcon/icon-1024.png" width="128" alt="VideoAsistant ikonu">
+</p>
+
 Türkçe YouTube videoları için **altyazı (SRT), bölüm başlıkları, açıklama, başlık önerileri ve etiketler** üreten yerel macOS uygulaması.
 
 Video döküşü (Whisper) tamamen **yerelde** çalışır; ağa sadece düzeltilmiş metinler gider.
@@ -113,8 +117,23 @@ VideoAsistant/
   Services/   keychain, ffmpeg, whisper, MiniMax istemcisi, metin dönüşümleri
   Pipeline/   iş akışı denetleyicisi
   Views/      SwiftUI arayüzü
-Tools/        test betikleri
+  Assets.xcassets/  uygulama ikonu
+Resources/AppIcon/  ikon master PNG'si ve AppIcon.icns
+Tools/        test betikleri ve ikon üreticisi
 ```
+
+## Uygulama ikonu
+
+İkon tamamen kod ile üretilir (harici görsel ya da filigran yoktur):
+
+```bash
+./Tools/make_icon.sh
+```
+
+Betik `Tools/make_icon.swift` ile CoreGraphics üzerinde 1024×1024 PNG çizer, tüm
+macOS boyutlarını üretir, `AppIcon.icns` oluşturur ve Xcode asset kataloğünü
+günceller. Tasarım: video karesi + oynat üçgeni + altyazı satırları, indigo→mor
+gradyan macOS squircle üzerinde.
 
 ## Lisans
 

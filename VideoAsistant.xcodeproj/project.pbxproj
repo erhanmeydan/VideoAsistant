@@ -33,6 +33,7 @@
 		A74FD25DEC3BCFE066F76BEF /* Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E1A869FAD1170CEBD7C804 /* Chapter.swift */; };
 		AC26C0F02C1A579B30FC3BD1 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1301B1C9057A0AEDE637F130 /* KeychainService.swift */; };
 		BDC9A5369366FBAF474B38A7 /* SmokeRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E75158AB0A87D99DA4738A55 /* SmokeRunner.swift */; };
+		C2C11F90F13E0074E39A3287 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 17F5AE35A05CC8BBB3F96F07 /* Assets.xcassets */; };
 		C69C1DE262CE58D74F804A94 /* ChapterValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28035135891BA2314BA72F7A /* ChapterValidator.swift */; };
 		C9324666DC5A2EAF75252620 /* Transcriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 039D3A4B9C4755B5CCE8CA71 /* Transcriber.swift */; };
 		D5297BDBBFFFEF3CCB222113 /* SRTParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF852CA95E95E09A5B9F178C /* SRTParser.swift */; };
@@ -51,6 +52,7 @@
 		0A3879C914537C54E7F5C43C /* TranscribeRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscribeRunner.swift; sourceTree = "<group>"; };
 		1055672875E843CCAA497120 /* ProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingView.swift; sourceTree = "<group>"; };
 		1301B1C9057A0AEDE637F130 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		17F5AE35A05CC8BBB3F96F07 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1858D8485CFF1A64E580154B /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		190272C163DB52074E481C1F /* VideoAsistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoAsistant.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		21705FC0BA0F98261EB5813E /* FileExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExporter.swift; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 		4965DCFE9D010C7B84F4B6E2 /* VideoAsistan */ = {
 			isa = PBXGroup;
 			children = (
+				17F5AE35A05CC8BBB3F96F07 /* Assets.xcassets */,
 				CB62FEC8EE0FE44C7152D2D2 /* App */,
 				EA5BEBF2D6A0092FFEA83CF5 /* Diagnostics */,
 				09C15CF9655F46D774621D09 /* Models */,
@@ -195,6 +198,7 @@
 			buildConfigurationList = 7056F118D44B61EFD768394F /* Build configuration list for PBXNativeTarget "VideoAsistant" */;
 			buildPhases = (
 				2EA508699A0C1C60D637E4B7 /* Sources */,
+				2CAEAF678512EBE4E342DC7B /* Resources */,
 			);
 			buildRules = (
 			);
@@ -239,6 +243,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2CAEAF678512EBE4E342DC7B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2C11F90F13E0074E39A3287 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2EA508699A0C1C60D637E4B7 /* Sources */ = {
