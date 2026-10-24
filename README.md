@@ -77,9 +77,15 @@ Uygulamanın tanıtım sitesi, MiniMax Code içinde çalışan bir **Mini App** 
 klasöründe durur. Gerçek ekran görüntüleri, gerçek çıktı örnekleri ve kopyalama düğmeleri içerir.
 
 Tasarım **Superdesign** ile üretildi (canvas: <https://superdesign.dev/teams/74fc6458-2be3-4f1a-b62c-474e105ed94a/projects/0f6c22e9-0e86-4824-b71b-c7dee406798e>).
-Sayfa Tailwind CDN, iconify CDN ve JetBrains Mono yazı tipi kullanır; görseller yereldir ve depoda tutulur.
+Görseller yereldir ve depoda tutulur.
 
-Canlı adres: <https://mydwqil2p0tno.space.minimax.io>
+Canlı adresler:
+- <https://erhanmeydan.github.io/VideoAsistant/> (GitHub Pages)
+- <https://mydwqil2p0tno.space.minimax.io> (MiniMax Code barındırma)
+
+Sayfa Tailwind'in derlenmiş CSS'ini kendi içinde barındırır (harici CDN yoktur);
+yalnızca ikonlar ve yazı tipi için iconify/Google Fonts kullanılır. CSS'i yeniden
+üretmek için: `./Tools/build_site_css.sh`
 
 ```bash
 # Paketi yayınla
