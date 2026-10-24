@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		09A0A9A2BC025F8A3E7F4E38 /* LaunchOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D12FCF385ED79D6B0D4FA9 /* LaunchOptions.swift */; };
 		19B4903122D288F60626983A /* APIKeyProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C309D0020B62B0175B0E831 /* APIKeyProvider.swift */; };
 		1D15FC8C11AFE2B7E3970523 /* VideoAsistantApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F986A0AA0DD1DDF16D11AF2B /* VideoAsistantApp.swift */; };
 		27A4C760A4C5667F4A0EEA69 /* ProcessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1055672875E843CCAA497120 /* ProcessingView.swift */; };
@@ -52,6 +53,7 @@
 		0A3879C914537C54E7F5C43C /* TranscribeRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscribeRunner.swift; sourceTree = "<group>"; };
 		1055672875E843CCAA497120 /* ProcessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingView.swift; sourceTree = "<group>"; };
 		1301B1C9057A0AEDE637F130 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		14D12FCF385ED79D6B0D4FA9 /* LaunchOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchOptions.swift; sourceTree = "<group>"; };
 		17F5AE35A05CC8BBB3F96F07 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1858D8485CFF1A64E580154B /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		190272C163DB52074E481C1F /* VideoAsistant.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoAsistant.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -174,6 +176,7 @@
 			children = (
 				4763BA4932C79E1975130757 /* AppPaths.swift */,
 				BA3411C1DCD1FC14DA82B2DE /* CLICommand.swift */,
+				14D12FCF385ED79D6B0D4FA9 /* LaunchOptions.swift */,
 				F986A0AA0DD1DDF16D11AF2B /* VideoAsistantApp.swift */,
 			);
 			path = App;
@@ -275,6 +278,7 @@
 				6D12CE5D16AEDEB5F03732D6 /* GeneratedContent.swift in Sources */,
 				802964899A891A966DFD98DB /* JSONPayload.swift in Sources */,
 				AC26C0F02C1A579B30FC3BD1 /* KeychainService.swift in Sources */,
+				09A0A9A2BC025F8A3E7F4E38 /* LaunchOptions.swift in Sources */,
 				F941B3410DCFC2C9E13359DE /* MiniMaxClient.swift in Sources */,
 				698F0E3492507BBBCD5D864B /* PipelineController.swift in Sources */,
 				90705A563C89828127332BDE /* ProcessRunner.swift in Sources */,

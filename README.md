@@ -71,6 +71,30 @@ geliştirme ikililerinde yeniden derleme sonrası anahtar okunamayabilir
 (`errSecAuthFailed`); bu durumda `MINIMAX_API_KEY` tanımlamak veya anahtarı
 uygulamadan tekrar girmek yeterlidir.
 
+## Tanıtım sitesi (Mini App)
+
+Uygulamanın tanıtım sitesi, MiniMax Code içinde çalışan bir **Mini App** olarak `miniapps/video-asistan-site/`
+klasöründe durur. Gerçek ekran görüntüleri, gerçek çıktı örnekleri ve kopyalama düğmeleri içerir.
+
+```bash
+# Paketi yayınla
+miniapp publish --plugin video-asistan-site
+```
+
+Site kaynakları `VideoAsistan/Assets.xcassets` ve `Resources/Screenshots/` altındaki varlıkları kullanır.
+
+## Ekran görüntüsü üretimi
+
+Tanıtım sitesindeki görüntüler uygulamanın kendi ekranlarından alınır:
+
+```bash
+./Tools/capture_screenshots.sh "video.mp4" Resources/Screenshots
+```
+
+Betik uygulamayı `--open <video>` ile başlatır, pencere konumunu dinamik olarak bulur ve
+işlem/sonuç ekranlarını kaydeder. `Tools/normalize_screenshot.swift` ise macOS'un yarı saydam
+penceresinden yansıyan ortam rengini nötrler.
+
 ## Komut satırı testleri
 
 ```bash
@@ -85,6 +109,9 @@ build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --apitest "kısa bir 
 
 # Uçtan uca: ffmpeg → whisper → MiniMax → dosya yazımı
 build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --smoke "video.mp4"
+
+# Verilen videoyu açılışta işlemeye başlat
+build/Debug/VideoAsistant.app/Contents/MacOS/VideoAsistant --open "video.mp4"
 ```
 
 Hepsi tek komutta:

@@ -42,6 +42,12 @@ struct ContentView: View {
         }
         .onAppear {
             controller.requestAPIKeyIfNeeded()
+
+            // `--open <video>` ile açıldıysa işlem hemen başlar.
+            if let pending = LaunchOptions.videoToOpen {
+                LaunchOptions.videoToOpen = nil
+                controller.start(with: pending)
+            }
         }
     }
 

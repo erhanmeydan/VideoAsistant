@@ -23,3 +23,6 @@ secrets.json
 VideoAsistant.work/
 /models/
 *.bin
+
+# Mini App çalışma zamanı geçici dosyaları
+miniapps/**/node_modules/

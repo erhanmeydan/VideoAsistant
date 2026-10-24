@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "name": "video-asistan-site",
+  "displayName": "VideoAsistan",
+  "version": "1.0.0",
+  "description": "Türkçe YouTube videoları için altyazı, bölüm başlığı, açıklama, başlık ve etiket üreten yerel macOS uygulamasının tanıtım sitesi.",
+  "author": "Erhan Meydan",
+  "icon": "icon.png",
+  "category": "Productivity",
+  "exampleQueries": ["VideoAsistan tanıtım sayfasını aç", "VideoAsistant nedir, nasıl kurulur?"],
+  "apps": [],
+  "mcpServers": [],
+  "skills": []
+}
