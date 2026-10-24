@@ -1,1492 +1,621 @@
-<!doctype html>
-<html lang="tr" data-theme="auto">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VideoAsistan — Türkçe YouTube videoları için altyazı, bölüm ve açıklama</title>
-    <meta
-      name="description"
-      content="Video döküşü tamamen yerelde çalışır. Düzeltilmiş Türkçe SRT, YouTube bölüm başlıkları, açıklama, başlık ve etiket MiniMax M3.1 Flash ile üretilir."
-    />
+<!DOCTYPE html><html lang="tr" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoAsistan — Türkçe YouTube videosu hazırlama aracı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <style>
-      /* ---------------------------------------------------------------
-         Tema değişkenleri (Mini App görsel temel satırı)
-         Vurgu rengi uygulamanın ikon paletinden: indigo → mor.
-      ---------------------------------------------------------------- */
-      :root,
-      [data-theme='light'] {
-        --mcode-bg: #ffffff;
-        --mcode-bg-secondary: #f6f6f8;
-        --mcode-surface: #ffffff;
-        --mcode-surface-muted: #f4f4f6;
-        --mcode-text: #16161a;
-        --mcode-text-muted: #5c5c66;
-        --mcode-text-subtle: #9a9aa4;
-        --mcode-border: #0a0a0a14;
-        --mcode-border-strong: #0a0a0af2;
-        --mcode-accent: #4f46e5;
-        --mcode-accent-soft: #4f46e514;
-        --mcode-success: #0a8f43;
-        --mcode-warning: #c2570b;
-        --mcode-danger: #d6203a;
-        --mcode-primary-action-bg: #4f46e5;
-        --mcode-primary-action-text: #ffffff;
-        --mcode-code-bg: #f6f6f8;
-      }
-
-      [data-theme='dark'] {
-        --mcode-bg: #131316;
-        --mcode-bg-secondary: #1a1a1f;
-        --mcode-surface: #1c1c21;
-        --mcode-surface-muted: #232329;
-        --mcode-text: #ededf0;
-        --mcode-text-muted: #9b9ba6;
-        --mcode-text-subtle: #6b6b76;
-        --mcode-border: #ffffff14;
-        --mcode-border-strong: #fffffff2;
-        --mcode-accent: #8b85f5;
-        --mcode-accent-soft: #8b85f51f;
-        --mcode-success: #34c26b;
-        --mcode-warning: #e5903a;
-        --mcode-danger: #f2617a;
-        --mcode-primary-action-bg: #6c63f2;
-        --mcode-primary-action-text: #ffffff;
-        --mcode-code-bg: #101014;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        [data-theme='auto'] {
-          --mcode-bg: #131316;
-          --mcode-bg-secondary: #1a1a1f;
-          --mcode-surface: #1c1c21;
-          --mcode-surface-muted: #232329;
-          --mcode-text: #ededf0;
-          --mcode-text-muted: #9b9ba6;
-          --mcode-text-subtle: #6b6b76;
-          --mcode-border: #ffffff14;
-          --mcode-border-strong: #fffffff2;
-          --mcode-accent: #8b85f5;
-          --mcode-accent-soft: #8b85f51f;
-          --mcode-success: #34c26b;
-          --mcode-warning: #e5903a;
-          --mcode-danger: #f2617a;
-          --mcode-primary-action-bg: #6c63f2;
-          --mcode-primary-action-text: #ffffff;
-          --mcode-code-bg: #101014;
-        }
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        margin: 0;
-        background: var(--mcode-bg);
-        color: var(--mcode-text);
-        font-family: ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      code,
-      pre,
-      .mono {
-        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-      }
-
-      a {
-        color: var(--mcode-accent);
-        text-decoration: none;
-      }
-
-      a:hover {
-        text-decoration: underline;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--mcode-accent);
-        outline-offset: 2px;
-        border-radius: 4px;
-      }
-
-      .skip-link {
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        background: var(--mcode-surface);
-        padding: 10px 16px;
-        border: 1px solid var(--mcode-border-strong);
-        border-radius: 0 0 8px 0;
-        z-index: 50;
-      }
-
-      .skip-link:focus {
-        left: 0;
-      }
-
-      .wrap {
-        max-width: 1120px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      /* ---------------- Başlık ---------------- */
-
-      .site-header {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background: color-mix(in srgb, var(--mcode-bg) 88%, transparent);
-        backdrop-filter: saturate(180%) blur(12px);
-        border-bottom: 1px solid var(--mcode-border);
-      }
-
-      .header-inner {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        height: 60px;
-      }
-
-      .brand {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--mcode-text);
-        font-weight: 600;
-        letter-spacing: -0.01em;
-      }
-
-      .brand:hover {
-        text-decoration: none;
-      }
-
-      .brand img {
-        border-radius: 7px;
-        display: block;
-      }
-
-      .site-nav {
-        display: flex;
-        gap: 22px;
-        margin-left: auto;
-      }
-
-      .site-nav a {
-        color: var(--mcode-text-muted);
-        font-size: 13px;
-      }
-
-      .site-nav a:hover {
-        color: var(--mcode-text);
-        text-decoration: none;
-      }
-
-      .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      /* ---------------- Düğmeler ---------------- */
-
-      .button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 36px;
-        padding: 0 16px;
-        border-radius: 8px;
-        border: 1px solid var(--mcode-border);
-        background: var(--mcode-surface-muted);
-        color: var(--mcode-text);
-        font-size: 13px;
-        font-weight: 500;
-        font-family: inherit;
-        cursor: pointer;
-        transition: background 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
-      }
-
-      .button:hover {
-        text-decoration: none;
-        border-color: var(--mcode-border-strong);
-      }
-
-      .button-primary {
-        background: var(--mcode-primary-action-bg);
-        border-color: transparent;
-        color: var(--mcode-primary-action-text);
-      }
-
-      .button-primary:hover {
-        filter: brightness(1.08);
-      }
-
-      .button-sm {
-        height: 30px;
-        padding: 0 12px;
-        font-size: 12px;
-      }
-
-      .icon-button {
-        width: 36px;
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        border: 1px solid var(--mcode-border);
-        background: var(--mcode-surface-muted);
-        color: var(--mcode-text-muted);
-        cursor: pointer;
-        transition: color 150ms ease-out, background 150ms ease-out;
-      }
-
-      .icon-button:hover {
-        color: var(--mcode-text);
-      }
-
-      /* ---------------- Hero ---------------- */
-
-      .hero {
-        padding: 72px 0 64px;
-        border-bottom: 1px solid var(--mcode-border);
-      }
-
-      .hero-inner {
-        display: grid;
-        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-        gap: 56px;
-        align-items: center;
-      }
-
-      .hero-icon {
-        width: 84px;
-        height: 84px;
-        border-radius: 19px;
-        box-shadow: 0 0 20px rgb(79 70 229 / 22%);
-        margin-bottom: 24px;
-      }
-
-      h1 {
-        margin: 0 0 16px;
-        font-size: 40px;
-        line-height: 1.15;
-        font-weight: 650;
-        letter-spacing: -0.025em;
-      }
-
-      .hero-lead {
-        margin: 0 0 28px;
-        font-size: 16px;
-        line-height: 1.65;
-        color: var(--mcode-text-muted);
-        max-width: 52ch;
-      }
-
-      .hero-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 20px;
-      }
-
-      .hero-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        height: 26px;
-        padding: 0 11px;
-        border-radius: 999px;
-        background: var(--mcode-surface-muted);
-        border: 1px solid var(--mcode-border);
-        color: var(--mcode-text-muted);
-        font-size: 12px;
-      }
-
-      .hero-visual {
-        border: 1px solid var(--mcode-border);
-        border-radius: 14px;
-        overflow: hidden;
-        background: var(--mcode-surface);
-        box-shadow: 0 0 20px rgb(10 10 10 / 8%);
-      }
-
-      .hero-visual img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      /* ---------------- Bölümler ---------------- */
-
-      section {
-        padding: 64px 0;
-        border-bottom: 1px solid var(--mcode-border);
-      }
-
-      .section-head {
-        max-width: 640px;
-        margin-bottom: 32px;
-      }
-
-      .eyebrow {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--mcode-accent);
-        margin-bottom: 8px;
-      }
-
-      h2 {
-        margin: 0 0 10px;
-        font-size: 24px;
-        line-height: 1.3;
-        font-weight: 600;
-        letter-spacing: -0.015em;
-      }
-
-      .section-head p {
-        margin: 0;
-        color: var(--mcode-text-muted);
-      }
-
-      /* Akış */
-
-      .flow {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .flow-step {
-        background: var(--mcode-surface);
-        border: 1px solid var(--mcode-border);
-        border-radius: 12px;
-        padding: 16px;
-      }
-
-      .flow-step .num {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 22px;
-        height: 22px;
-        border-radius: 6px;
-        background: var(--mcode-accent-soft);
-        color: var(--mcode-accent);
-        font-size: 12px;
-        font-weight: 600;
-        margin-bottom: 10px;
-      }
-
-      .flow-step h3 {
-        margin: 0 0 4px;
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .flow-step p {
-        margin: 0;
-        font-size: 13px;
-        color: var(--mcode-text-muted);
-      }
-
-      .flow-step code {
-        font-size: 12px;
-        color: var(--mcode-accent);
-      }
-
-      /* Sekmeler */
-
-      .tabs {
-        display: inline-flex;
-        gap: 2px;
-        padding: 3px;
-        background: var(--mcode-surface-muted);
-        border: 1px solid var(--mcode-border);
-        border-radius: 10px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-      }
-
-      .tab {
-        height: 30px;
-        padding: 0 14px;
-        border: 0;
-        border-radius: 8px;
-        background: transparent;
-        color: var(--mcode-text-muted);
-        font-family: inherit;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 150ms ease-out, color 150ms ease-out;
-      }
-
-      .tab:hover {
-        color: var(--mcode-text);
-      }
-
-      .tab[aria-selected='true'] {
-        background: var(--mcode-surface);
-        color: var(--mcode-text);
-        box-shadow: 0 1px 2px rgb(10 10 10 / 8%);
-      }
-
-      .panel {
-        display: none;
-      }
-
-      .panel.is-active {
-        display: block;
-      }
-
-      /* Ekran görüntüleri */
-
-      .shot {
-        border: 1px solid var(--mcode-border);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--mcode-surface);
-      }
-
-      .shot img {
-        display: block;
-        width: 100%;
-        height: auto;
-      }
-
-      .shot-caption {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 12px 16px;
-        border-top: 1px solid var(--mcode-border);
-        background: var(--mcode-surface-muted);
-        font-size: 12px;
-        color: var(--mcode-text-muted);
-      }
-
-      /* Çıktı paneli */
-
-      .output-card {
-        border: 1px solid var(--mcode-border);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--mcode-surface);
-      }
-
-      .output-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--mcode-border);
-        background: var(--mcode-surface-muted);
-      }
-
-      .output-head h3 {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .output-body {
-        padding: 16px;
-        max-height: 420px;
-        overflow: auto;
-      }
-
-      .output-body pre {
-        margin: 0;
-        font-size: 12.5px;
-        line-height: 1.65;
-        white-space: pre-wrap;
-        word-break: break-word;
-        color: var(--mcode-text);
-      }
-
-      .output-body p {
-        margin: 0 0 12px;
-      }
-
-      .output-body p:last-child {
-        margin-bottom: 0;
-      }
-
-      .output-body .chapter-row {
-        display: flex;
-        gap: 14px;
-        padding: 5px 0;
-        border-bottom: 1px solid var(--mcode-border);
-        font-size: 13px;
-      }
-
-      .output-body .chapter-row:last-child {
-        border-bottom: 0;
-      }
-
-      .output-body .chapter-row .time {
-        color: var(--mcode-accent);
-        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 12px;
-        min-width: 52px;
-      }
-
-      .tag-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .tag {
-        padding: 5px 11px;
-        border-radius: 999px;
-        background: var(--mcode-surface-muted);
-        border: 1px solid var(--mcode-border);
-        font-size: 12.5px;
-      }
-
-      /* Özellik ızgarası */
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .card {
-        background: var(--mcode-surface);
-        border: 1px solid var(--mcode-border);
-        border-radius: 12px;
-        padding: 18px;
-      }
-
-      .card h3 {
-        margin: 0 0 6px;
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .card p {
-        margin: 0;
-        font-size: 13px;
-        color: var(--mcode-text-muted);
-      }
-
-      .card .icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 7px;
-        background: var(--mcode-accent-soft);
-        color: var(--mcode-accent);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 12px;
-      }
-
-      /* Token tablosu */
-
-      .kpi-row {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-      }
-
-      .kpi {
-        background: var(--mcode-surface);
-        border: 1px solid var(--mcode-border);
-        border-radius: 12px;
-        padding: 18px;
-      }
-
-      .kpi .label {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--mcode-text-muted);
-        margin-bottom: 6px;
-      }
-
-      .kpi .value {
-        font-size: 26px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .kpi .unit {
-        font-size: 12px;
-        color: var(--mcode-text-subtle);
-        margin-left: 4px;
-      }
-
-      /* Kurulum */
-
-      .steps {
-        display: grid;
-        gap: 20px;
-      }
-
-      .install-step {
-        display: grid;
-        grid-template-columns: 30px minmax(0, 1fr);
-        gap: 16px;
-        align-items: start;
-      }
-
-      .install-step .num {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
-        background: var(--mcode-accent-soft);
-        color: var(--mcode-accent);
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .install-step h3 {
-        margin: 2px 0 4px;
-        font-size: 15px;
-        font-weight: 600;
-      }
-
-      .install-step p {
-        margin: 0 0 10px;
-        color: var(--mcode-text-muted);
-        font-size: 13px;
-      }
-
-      .code {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        padding: 12px 14px;
-        background: var(--mcode-code-bg);
-        border: 1px solid var(--mcode-border);
-        border-radius: 10px;
-      }
-
-      .code pre {
-        margin: 0;
-        flex: 1;
-        overflow-x: auto;
-        font-size: 12.5px;
-        line-height: 1.6;
-        white-space: pre;
-      }
-
-      .code .button {
-        flex-shrink: 0;
-      }
-
-      /* Alt bilgi */
-
-      footer {
-        padding: 40px 0 56px;
-      }
-
-      .footer-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        flex-wrap: wrap;
-      }
-
-      .footer-inner p {
-        margin: 0;
-        font-size: 13px;
-        color: var(--mcode-text-muted);
-      }
-
-      .footer-links {
-        display: flex;
-        gap: 18px;
-        font-size: 13px;
-      }
-
-      .toast {
-        position: fixed;
-        left: 50%;
-        bottom: 24px;
-        transform: translate(-50%, 12px);
-        padding: 10px 16px;
-        border-radius: 10px;
-        background: var(--mcode-text);
-        color: var(--mcode-bg);
-        font-size: 13px;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 180ms ease-out, transform 180ms ease-out;
-        z-index: 40;
-      }
-
-      .toast.is-visible {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-
-      @media (max-width: 900px) {
-        .hero-inner {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 36px;
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg-primary: #131316;
+            --surface-primary: #1C1C21;
+            --surface-secondary: #232329;
+            --text-primary: #EDEDF0;
+            --text-secondary: #9B9BA6;
+            --border-subtle: #ffffff14;
+            --accent-gradient: linear-gradient(135deg, #4F46E5 0%, #7C4DFF 50%, #A855F7 100%);
         }
 
-        .flow {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .kpi-row {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        .gradient-border {
+            position: relative;
+            border-radius: 12px;
+            background: var(--surface-primary);
+            padding: 1px;
+        }
+        
+        .gradient-border::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            padding: 1px;
+            background: var(--accent-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.4;
         }
 
-        h1 {
-          font-size: 32px;
+        .btn-primary {
+            background: var(--accent-gradient);
+            transition: filter 0.2s ease;
         }
 
-        .site-nav {
-          display: none;
-        }
-      }
-
-      @media (max-width: 560px) {
-        .flow,
-        .grid,
-        .kpi-row {
-          grid-template-columns: minmax(0, 1fr);
+        .btn-primary:hover {
+            filter: brightness(1.1);
         }
 
-        .hero {
-          padding: 48px 0 44px;
+        .tab-active {
+            background-color: var(--surface-secondary);
+            color: var(--text-primary);
+            border-bottom: 2px solid #7C4DFF;
         }
 
-        section {
-          padding: 44px 0;
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        html {
-          scroll-behavior: auto;
+        .panel-hidden {
+            display: none;
         }
 
-        * {
-          transition: none !important;
+        h1, h2, h3 {
+            letter-spacing: -0.02em;
+            line-height: 1.15;
         }
-      }
-    </style>
-  </head>
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-secondary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    
+        /* ---- Açık tema (superdesign koyu tasarımının açık karşılığı) ----
+           Tasarım taban rengini CSS değişkenlerinden alıyor; açık temada
+           değişkenler ve sabit hex kullanan Tailwind sınıfları birlikte ezilir. */
+        html.light {
+            color-scheme: light;
+            --bg-primary: #FFFFFF;
+            --surface-primary: #F6F6F8;
+            --surface-secondary: #EDEDF2;
+            --text-primary: #16161A;
+            --text-secondary: #5C5C66;
+            --border-subtle: #0A0A0A1F;
+        }
+        html.light body { background-color: #FFFFFF; color: #16161A; }
+        html.light .bg-\[\#131316\] { background-color: #FFFFFF; }
+        html.light .bg-\[\#131316\]\/80 { background-color: rgba(255, 255, 255, 0.85); }
+        html.light .bg-\[\#1C1C21\] { background-color: #F6F6F8; }
+        html.light .bg-\[\#232329\] { background-color: #EDEDF2; }
+        html.light .hover\:bg-\[\#2d2d35\]:hover { background-color: #E2E2E8; }
+        html.light .text-\[\#EDEDF0\] { color: #16161A; }
+        html.light .text-\[\#9B9BA6\] { color: #5C5C66; }
+        html.light .border-\[\#ffffff14\] { border-color: #0A0A0A1F; }
+        html.light .text-indigo-400 { color: #4F46E5; }
+        /* Açık zeminde varsayılan metin rengi koyu olsun. */
+        html.light .text-white { color: #16161A; }
+        /* Marka gradyanı taşıyan düğmelerde metin beyaz kalır. */
+        html.light .btn-primary,
+        html.light .btn-primary .text-white { color: #FFFFFF; }
+        html.light .hover\:text-white:hover { color: #16161A; }
+        html.light .btn-primary:hover,
+        html.light .btn-primary:hover .text-white { color: #FFFFFF; }
+        html.light .toast { background: #16161A; color: #FFFFFF; }
+</style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col items-center" data-sd-id="1">
+        <!-- Sticky Navigation -->
+        <header class="sticky top-0 z-50 w-full border-b border-[#ffffff14] bg-[#131316]/80 backdrop-blur-md" data-sd-id="2">
+            <div class="max-w-[1120px] mx-auto px-6 h-16 flex items-center justify-between" data-sd-id="3">
+                <a href="#" id="nav-logo" class="flex items-center gap-3 group" data-sd-id="4">
+                    <img src="/assets/icon.png" alt="Logo" class="w-7 h-7 rounded-md" data-sd-id="5">
+                    <span class="font-semibold text-[15px] tracking-tight" data-sd-id="6">VideoAsistan</span>
+                </a>
+                
+                <nav class="hidden md:flex items-center gap-8 text-[13px] text-[#9B9BA6] font-medium" data-sd-id="7">
+                    <a href="#nasil" id="nav-link-nasil" class="hover:text-white transition-colors" data-sd-id="8">Nasıl çalışır</a>
+                    <a href="#ekran" id="nav-link-ekran" class="hover:text-white transition-colors" data-sd-id="9">Ekran görüntüleri</a>
+                    <a href="#ciktilar" id="nav-link-ciktilar" class="hover:text-white transition-colors" data-sd-id="10">Çıktılar</a>
+                    <a href="#kurulum" id="nav-link-kurulum" class="hover:text-white transition-colors" data-sd-id="11">Kurulum</a>
+                </nav>
 
-  <body id="top">
-    <div id="root">
-<a id="link-classskiplink-hrefmain" class="skip-link" href="#main">İçeriğe geç</a>
-
-    <header class="site-header">
-      <div class="wrap header-inner">
-        <a id="link-classbrand-hreftop" class="brand" href="#top">
-          <img src="/assets/icon.png" width="28" height="28" alt="" />
-          <span>VideoAsistan</span>
-        </a>
-
-        <nav class="site-nav" aria-label="Bölümler">
-          <a id="link-hrefnasil" href="#nasil">Nasıl çalışır</a>
-          <a id="link-hrefekran" href="#ekran">Ekran görüntüleri</a>
-          <a id="link-hrefciktilar" href="#ciktilar">Çıktılar</a>
-          <a id="link-hrefkurulum" href="#kurulum">Kurulum</a>
-        </nav>
-
-        <div class="header-actions">
-          <button id="theme-toggle" class="icon-button" type="button" aria-label="Temayı değiştir">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="4"></circle>
-              <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
-            </svg>
-          </button>
-          <a
-            class="button button-primary"
-            href="https://github.com/erhanmeydan/VideoAsistant/releases/download/v1.0.0/VideoAsistant-v1.0.0.zip"
-            >İndir</a
-          >
-        </div>
-      </div>
-    </header>
-
-    <main id="main">
-      <!-- ------------------------------------------------ Hero -->
-      <section class="hero">
-        <div class="wrap hero-inner">
-          <div>
-            <img class="hero-icon" src="/assets/icon.png" width="84" height="84" alt="VideoAsistant ikonu" />
-            <h1>Her videoyu YouTube'a hazırlamak artık bir sürükleme</h1>
-            <p class="hero-lead">
-              Video döküşü tamamen bilgisayarında çalışır. Düzeltilmiş Türkçe altyazı, bölüm başlıkları,
-              açıklama, 5 başlık ve 15 etiket MiniMax M3.1 Flash ile üretilir ve videonun klasörüne
-              dosya olarak yazılır.
-            </p>
-            <div class="hero-actions">
-              <a
-                class="button button-primary"
-                href="https://github.com/erhanmeydan/VideoAsistant/releases/download/v1.0.0/VideoAsistant-v1.0.0.zip"
-                ><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                İndir (v1.0.0)</a
-              >
-              <a id="link-classbutton-hrefhttpsgithubcomerhanmeyda" class="button" href="https://github.com/erhanmeydan/VideoAsistant">Kaynak kodu</a>
-            </div>
-            <div class="hero-meta">
-              <span class="pill">macOS 14+</span>
-              <span class="pill">Açık kaynak · MIT</span>
-              <span class="pill">Yerel Whisper large-v3-turbo</span>
-              <span class="pill">MiniMax M3.1 Flash</span>
-            </div>
-          </div>
-
-          <figure class="hero-visual">
-            <img
-              src="/assets/app-results.png"
-              alt="VideoAsistan uygulamasında sekmeli sonuç ekranı: altyazı, bölümler, açıklama, başlıklar ve etiketler sekmeleri, giriş ve çıktı token sayacı"
-              width="1400"
-              height="1014"
-            />
-            <figcaption class="shot-caption">
-              <span>Sonuç ekranı: 5 sekme, gerçek token sayacı ve kaydedilen dosyalar</span>
-              <span class="mono">Evde Sığır Besleyin.mp4</span>
-            </figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <!-- ------------------------------------------------ Nasıl çalışır -->
-      <section id="nasil">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Akış</span>
-            <h2>Sürükle, bırak, kopyala</h2>
-            <p>
-              Beş adım, ortalama birkaç saniye. Uzun videolarda arayüz donmaz; hangi adımda olduğunuz
-              ekranda yazar.
-            </p>
-          </div>
-
-          <ol class="flow" style="list-style: none; margin: 0; padding: 0">
-            <li class="flow-step">
-              <span class="num">1</span>
-              <h3>Videoyu bırak</h3>
-              <p>MP4 veya MOV dosyasını penceredeki alana sürükle.</p>
-            </li>
-            <li class="flow-step">
-              <span class="num">2</span>
-              <h3>Ses çıkar</h3>
-              <p><code>ffmpeg</code> 16 kHz mono WAV üretir.</p>
-            </li>
-            <li class="flow-step">
-              <span class="num">3</span>
-              <h3>Yerel döküş</h3>
-              <p><code>whisper.cpp</code> Türkçe yazıya çevirir, internetsiz.</p>
-            </li>
-            <li class="flow-step">
-              <span class="num">4</span>
-              <h3>Metinleri üret</h3>
-              <p>MiniMax M3.1 Flash üç ayrı çağrıda çalışır.</p>
-            </li>
-            <li class="flow-step">
-              <span class="num">5</span>
-              <h3>Kopyala ve kaydet</h3>
-              <p>5 sekme, 5 dosya, tek tıkla panoya.</p>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <!-- ------------------------------------------------ Ekran görüntüleri -->
-      <section id="ekran">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Ekran görüntüleri</span>
-            <h2>Gerçek uygulama</h2>
-            <p>Aşağıdaki görünteler uygulamanın kendi ekranlarından alınmıştır.</p>
-          </div>
-
-          <div class="tabs" role="tablist" aria-label="Ekran görüntüsü seçimi">
-            <button class="tab" role="tab" id="shot-tab-1" aria-controls="shot-panel-1" aria-selected="true">
-              Sürükle bırak
-            </button>
-            <button class="tab" role="tab" id="shot-tab-2" aria-controls="shot-panel-2" aria-selected="false">
-              İşleniyor
-            </button>
-            <button class="tab" role="tab" id="shot-tab-3" aria-controls="shot-panel-3" aria-selected="false">
-              Sonuçlar
-            </button>
-          </div>
-
-          <div class="panel is-active" id="shot-panel-1" role="tabpanel" aria-labelledby="shot-tab-1">
-            <figure class="shot">
-              <img
-                src="/assets/app-dropzone.png"
-                alt="VideoAsistan açılış ekranı: ortada kesikli çerçeveli 'Videoyu buraya sürükle' alanı, altında Dosya seç düğmesi"
-                width="1400"
-                height="1014"
-              />
-              <figcaption class="shot-caption">
-                <span>Boş durum: dosyayı sürükle veya seç</span>
-                <span class="mono">MP4 · MOV</span>
-              </figcaption>
-            </figure>
-          </div>
-
-          <div class="panel" id="shot-panel-2" role="tabpanel" aria-labelledby="shot-tab-2">
-            <figure class="shot">
-              <img
-                src="/assets/app-processing.png"
-                alt="İşlem ekranı: Video hazırlanıyor, Ses çıkarılıyor, Yazıya çevriliyor adımları yeşil tiklerle tamamlanmış, Metinler hazırlanıyor adımında ilerleme çubuğu görünüyor"
-                width="1400"
-                height="1014"
-              />
-              <figcaption class="shot-caption">
-                <span>Canlı adım listesi ve ilerleme çubuğu</span>
-                <span class="mono">4 / 6 adım</span>
-              </figcaption>
-            </figure>
-          </div>
-
-          <div class="panel" id="shot-panel-3" role="tabpanel" aria-labelledby="shot-tab-3">
-            <figure class="shot">
-              <img
-                src="/assets/app-results.png"
-                alt="Sonuç ekranı: altyazı sekmesi açık, üstte token sayacı (giriş 2778, çıktı 4477, toplam 7255, thinking 3368) ve kaydedilen beş dosyanın listesi"
-                width="1400"
-                height="1014"
-              />
-              <figcaption class="shot-caption">
-                <span>Sekmeli sonuçlar, token sayacı ve kaydedilen dosyalar</span>
-                <span class="mono">16 segment · 7 bölüm</span>
-              </figcaption>
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      <!-- ------------------------------------------------ Çıktılar -->
-      <section id="ciktilar">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Çıktılar</span>
-            <h2>Tek videodan beş çıktı</h2>
-            <p>
-              Aşağıdakiler uygulamanın gerçek bir çalıştırmadan ürettiği çıktılardır. Her sekmede
-              kopyalama düğmesi bulunur.
-            </p>
-          </div>
-
-          <div class="tabs" role="tablist" aria-label="Çıktı türü seçimi">
-            <button class="tab" role="tab" id="out-tab-1" aria-controls="out-panel-1" aria-selected="true">
-              Altyazı
-            </button>
-            <button class="tab" role="tab" id="out-tab-2" aria-controls="out-panel-2" aria-selected="false">
-              Bölümler
-            </button>
-            <button class="tab" role="tab" id="out-tab-3" aria-controls="out-panel-3" aria-selected="false">
-              Açıklama
-            </button>
-            <button class="tab" role="tab" id="out-tab-4" aria-controls="out-panel-4" aria-selected="false">
-              Başlıklar
-            </button>
-            <button class="tab" role="tab" id="out-tab-5" aria-controls="out-panel-5" aria-selected="false">
-              Etiketler
-            </button>
-          </div>
-
-          <div class="panel is-active" id="out-panel-1" role="tabpanel" aria-labelledby="out-tab-1">
-            <div class="output-card">
-              <div class="output-head">
-                <h3>Altyazı (SRT) · 16 segment</h3>
-                <button class="button button-sm" type="button" data-copy="#out-text-1">Kopyala</button>
-              </div>
-              <div class="output-body">
-                <pre id="out-text-1">1
-00:00:00,000 --> 00:00:04,830
-Arkadaşlar, size inanılmaz bir şey
-söyleyeceğim.
-
-2
-00:00:04,830 --> 00:00:09,520
-Evde kendi ineğinizi beslemek. Evet, bu
-çılgınca
-
-3
-00:00:09,520 --> 00:00:13,980
-durum hayatınızı baştan aşağı
-değiştirebilir.
-
-4
-00:00:13,980 --> 00:00:19,920
-Her sabah taptaze, katkısız süt.
-Düşünsenize</pre>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="out-panel-2" role="tabpanel" aria-labelledby="out-tab-2">
-            <div class="output-card">
-              <div class="output-head">
-                <h3>Bölüm başlıkları · 7 bölüm</h3>
-                <button class="button button-sm" type="button" data-copy="#out-text-2">Kopyala</button>
-              </div>
-              <div class="output-body" id="out-text-2">
-                <div class="chapter-row"><span class="time">00:00</span><span>Evde İnek Beslemenin Hayat Değiştirebilirliği</span></div>
-                <div class="chapter-row"><span class="time">00:10</span><span>Taze ve Katkısız Sütün Tadı</span></div>
-                <div class="chapter-row"><span class="time">00:21</span><span>Ev Yapımı Peynir ve Yoğurt İmkânları</span></div>
-                <div class="chapter-row"><span class="time">00:33</span><span>Sürdürülebilirlik ve Çevreye Katkı</span></div>
-                <div class="chapter-row"><span class="time">00:44</span><span>İneklerin Dayanıklılığı ve Bakımı</span></div>
-                <div class="chapter-row"><span class="time">00:55</span><span>Özgür Üretimin Verdiği Mutluluk</span></div>
-                <div class="chapter-row"><span class="time">01:05</span><span>Market Sütten Vazgeçip Sığır Beslemek</span></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="out-panel-3" role="tabpanel" aria-labelledby="out-tab-3">
-            <div class="output-card">
-              <div class="output-head">
-                <h3>Açıklama · 2 paragraf</h3>
-                <button class="button button-sm" type="button" data-copy="#out-text-3">Kopyala</button>
-              </div>
-              <div class="output-body" id="out-text-3">
-                <p>
-                  Evde kendi ineğinizi beslemek, taze ve katkısız süt elde etmenin yanı sıra sürdürülebilir
-                  yaşama önemli bir katkı sağlayabilir. Doğru bakım ve uygun koşullar altında inekler uzun
-                  yıllar boyunca sizinle olabilir.
-                </p>
-                <p>
-                  Kendi sütünüzü kullanarak neşkübü peynir, yoğurt ve daha fazla gıda üretebilir, üretim
-                  sürecini kontrol edebilirsiniz. Evde sığır beslemenin zorluklarını ve dikkat edilmesi
-                  gerekenleri bu videoda öğrenebilirsiniz.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="out-panel-4" role="tabpanel" aria-labelledby="out-tab-4">
-            <div class="output-card">
-              <div class="output-head">
-                <h3>Başlık önerileri · 5 adet</h3>
-                <button class="button button-sm" type="button" data-copy="#out-text-4">Kopyala</button>
-              </div>
-              <div class="output-body" id="out-text-4">
-                <p>Evde Sığır Beslemenin Hayatınıza Katkıları</p>
-                <p>Kendi Sütünüzü Üretmenin Keyfi</p>
-                <p>Evde İnek Beslemek Neden İyi Bir Fikir?</p>
-                <p>Taze Süt ve Sürdürülebilir Yaşam</p>
-                <p>Evde Sığır Beslemenin İpuçları</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="out-panel-5" role="tabpanel" aria-labelledby="out-tab-5">
-            <div class="output-card">
-              <div class="output-head">
-                <h3>Etiketler · 15 adet, 207 karakter</h3>
-                <button class="button button-sm" type="button" data-copy="#out-text-5">Kopyala</button>
-              </div>
-              <div class="output-body" id="out-text-5">
-                <div class="tag-list">
-                  <span class="tag">Evde sığır besleme</span>
-                  <span class="tag">İnek besleme</span>
-                  <span class="tag">Evde inek</span>
-                  <span class="tag">Taze süt</span>
-                  <span class="tag">Katkısız süt</span>
-                  <span class="tag">Sürdürülebilirlik</span>
-                  <span class="tag">Süt üretimi</span>
-                  <span class="tag">Ev yapımı yoğurt</span>
-                  <span class="tag">Neşkübü peynir</span>
-                  <span class="tag">Doğal gıda</span>
-                  <span class="tag">Kendi üretiminiz</span>
-                  <span class="tag">İnek bakımı</span>
-                  <span class="tag">Köy hayatı</span>
-                  <span class="tag">Gıda üretimi</span>
-                  <span class="tag">Çevre dostu yaşam</span>
+                <div class="flex items-center gap-4" data-sd-id="12">
+                    <button id="theme-btn" class="text-[#9B9BA6] hover:text-white p-2" data-sd-id="13">
+                        <iconify-icon icon="lucide:moon" class="text-lg"></iconify-icon>
+                    </button>
+                    <a href="https://github.com/erhanmeydan/VideoAsistant/releases/download/v1.0.0/VideoAsistant-v1.0.0.zip" id="nav-cta-download" class="btn-primary px-4 py-2 rounded-lg text-white text-[13px] font-semibold shadow-lg shadow-indigo-500/20" data-sd-id="14">
+                        İndir
+                    </a>
                 </div>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
+        </header>
 
-      <!-- ------------------------------------------------ Özellikler -->
-      <section id="ozellikler">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Özellikler</span>
-            <h2>Neden ayrı?</h2>
-            <p>Zamanlamaya dokunmayan, tokenı şeffaf gösteren, kuralları koda gömülü bir akış.</p>
-          </div>
-
-          <div class="grid">
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                  <path d="M7 15h4M13 15h4M7 11h2"></path>
-                </svg>
-              </span>
-              <h3>Zaman damgaları korunur</h3>
-              <p>Model yalnızca metni düzeltir. Zamanlama Whisper çıktısından gelir, yapay zekâ dokunamaz.</p>
-            </div>
-
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 3v18M5 8l7-5 7 5"></path>
-                </svg>
-              </span>
-              <h3>Döküş tamamen yerelde</h3>
-              <p>whisper.cpp çevrimdışı çalışır. İnternetten sadece düzeltilmiş metinler gider.</p>
-            </div>
-
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 19V5M4 19h16"></path>
-                  <path d="M8 16v-5M12 16V8M16 16v-3"></path>
-                </svg>
-              </span>
-              <h3>Gerçek token sayacı</h3>
-              <p>Giriş ve çıktı tokenları API yanıtındaki kullanımdan okunur, tahmin edilmez.</p>
-            </div>
-
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9 11l3 3 8-8"></path>
-                  <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path>
-                </svg>
-              </span>
-              <h3>Kurallar koda gömülü</h3>
-              <p>İlk bölüm 00:00, en az 3 bölüm, bölümler arası en az 10 saniye, etiketler 500 karaktere sığar.</p>
-            </div>
-
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 3v12"></path>
-                  <path d="M7 10l5 5 5-5"></path>
-                  <path d="M4 19h16"></path>
-                </svg>
-              </span>
-              <h3>Dosyalar yanına yazılır</h3>
-              <p>Beş çıktı, videonun bulunduğu klasöre standart adlarla kaydedilir.</p>
-            </div>
-
-            <div class="card">
-              <span class="icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="9"></circle>
-                  <path d="M12 7v5l3 2"></path>
-                </svg>
-              </span>
-              <h3>Uzun video da donmaz</h3>
-              <p>İşlem arka planda yürür, arayüz her an yanıt verir, adım ve yüzde ekranda yazar.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ------------------------------------------------ Token -->
-      <section id="token">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Token kullanımı</span>
-            <h2>Bildiğiniz rakamlar</h2>
-            <p>
-              Aşağıdaki değerler 70 saniyelik bir videonun tam işleminde API yanıtından okunan gerçek
-              kullanımdır.
-            </p>
-          </div>
-
-          <div class="kpi-row">
-            <div class="kpi">
-              <span class="label">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 5v14M19 12l-7 7-7-7"></path>
-                </svg>
-                Girdi
-              </span>
-              <span class="value">2.778</span><span class="unit">token</span>
-            </div>
-            <div class="kpi">
-              <span class="label">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 19V5M5 12l7-7 7 7"></path>
-                </svg>
-                Çıktı
-              </span>
-              <span class="value">4.477</span><span class="unit">token</span>
-            </div>
-            <div class="kpi">
-              <span class="label">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M4 7h16M4 12h16M4 17h10"></path>
-                </svg>
-                Toplam
-              </span>
-              <span class="value">7.255</span><span class="unit">token</span>
-            </div>
-            <div class="kpi">
-              <span class="label">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M9.5 9a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.9-.9 1.5v.7"></path>
-                  <circle cx="12" cy="17" r="1"></circle>
-                </svg>
-                Thinking
-              </span>
-              <span class="value">3.368</span><span class="unit">token</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ------------------------------------------------ Kurulum -->
-      <section id="kurulum">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="eyebrow">Kurulum</span>
-            <h2>Üç adım</h2>
-            <p>İndirin, araçları kurun, modeli indirin. API anahtarını uygulama ilk açılışta sorar.</p>
-          </div>
-
-          <div class="steps">
-            <div class="install-step">
-              <span class="num">1</span>
-              <div>
-                <h3>Araçları kurun</h3>
-                <p>ffmpeg sesi çıkarır, whisper.cpp döküşü yapar.</p>
-                <div class="code">
-                  <pre>brew install ffmpeg whisper.cpp</pre>
-                  <button class="button button-sm" type="button" data-copy-code>Kopyala</button>
+        <main class="w-full max-w-[1120px] px-6" data-sd-id="15">
+            <!-- Hero Section -->
+            <section class="py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center border-b border-[#ffffff14]" data-sd-id="16">
+                <div class="space-y-8" data-sd-id="17">
+                    <div class="inline-block relative" data-sd-id="18">
+                        <img src="/assets/icon.png" alt="App Icon" class="w-24 h-24 rounded-[22px] shadow-2xl shadow-indigo-500/30" data-sd-id="19">
+                    </div>
+                    <div class="space-y-4" data-sd-id="20">
+                        <h1 class="text-[52px] font-bold text-white tracking-tighter leading-[1.05]" data-sd-id="21">
+                            Her videoyu YouTube'a hazırlamak artık bir sürükleme.
+                        </h1>
+                        <p class="text-[17px] text-[#9B9BA6] leading-relaxed max-w-[500px]" data-sd-id="22">
+                            Video döküşü tamamen bilgisayarında çalışır. Düzeltilmiş Türkçe altyazı, bölüm başlıkları, açıklama ve etiketler saniyeler içinde hazır.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap gap-3" data-sd-id="23">
+                        <a href="https://github.com/erhanmeydan/VideoAsistant/releases/download/v1.0.0/VideoAsistant-v1.0.0.zip" id="hero-download-btn" class="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold" data-sd-id="24">
+                            <iconify-icon icon="lucide:download" class="text-lg"></iconify-icon>
+                            İndir (v1.0.0)
+                        </a>
+                        <a href="https://github.com/erhanmeydan/VideoAsistant" id="hero-source-btn" class="bg-[#232329] hover:bg-[#2d2d35] border border-[#ffffff14] flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold transition-colors" data-sd-id="25">
+                            <iconify-icon icon="lucide:github" class="text-lg"></iconify-icon>
+                            Kaynak kodu
+                        </a>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-4" data-sd-id="26">
+                        <span class="bg-[#232329] border border-[#ffffff14] px-3 py-1 rounded-full text-[11px] font-medium text-[#9B9BA6] uppercase tracking-wider" data-sd-id="27">macOS 14+</span>
+                        <span class="bg-[#232329] border border-[#ffffff14] px-3 py-1 rounded-full text-[11px] font-medium text-[#9B9BA6] uppercase tracking-wider" data-sd-id="28">Açık kaynak · MIT</span>
+                        <span class="bg-[#232329] border border-[#ffffff14] px-3 py-1 rounded-full text-[11px] font-medium text-[#9B9BA6] uppercase tracking-wider" data-sd-id="29">Yerel Whisper large-v3-turbo</span>
+                        <span class="bg-[#232329] border border-[#ffffff14] px-3 py-1 rounded-full text-[11px] font-medium text-[#9B9BA6] uppercase tracking-wider" data-sd-id="30">MiniMax M3.1 Flash</span>
+                    </div>
                 </div>
-              </div>
-            </div>
-
-            <div class="install-step">
-              <span class="num">2</span>
-              <div>
-                <h3>Whisper modelini indirin</h3>
-                <p>Türkçe için large-v3-turbo modeli (~1,6 GB) kullanılır.</p>
-                <div class="code">
-                  <pre>mkdir -p ~/Library/Application\ Support/VideoAsistant/models
-curl -L -C - -o ~/Library/Application\ Support/VideoAsistant/models/ggml-large-v3-turbo.bin \
-  https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin</pre>
-                  <button class="button button-sm" type="button" data-copy-code>Kopyala</button>
+                <div class="relative group" data-sd-id="31">
+                    <div class="absolute -inset-4 bg-gradient-to-tr from-indigo-500/10 to-purple-500/10 blur-3xl opacity-50" data-sd-id="32"></div>
+                    <div class="relative rounded-2xl border border-[#ffffff14] overflow-hidden bg-[#1C1C21] shadow-2xl" data-sd-id="33">
+                        <img src="/assets/app-results.png" alt="App Preview" class="w-full h-auto" data-sd-id="34">
+                    </div>
                 </div>
-              </div>
-            </div>
+            </section>
 
-            <div class="install-step">
-              <span class="num">3</span>
-              <div>
-                <h3>Anahtarı girin</h3>
-                <p>
-                  Uygulama ilk açılışta MiniMax API anahtarını ister ve macOS Keychain'e kaydeder. Test
-                  için <code>MINIMAX_API_KEY</code> ortam değişkeni de yeterlidir.
-                </p>
-                <div class="code">
-                  <pre>export MINIMAX_API_KEY="..."</pre>
-                  <button class="button button-sm" type="button" data-copy-code>Kopyala</button>
+            <!-- How it works -->
+            <section id="nasil" class="py-20 border-b border-[#ffffff14]" data-sd-id="35">
+                <div class="mb-12" data-sd-id="36">
+                    <h2 class="text-2xl font-bold mb-4" data-sd-id="37">Nasıl çalışır?</h2>
+                    <p class="text-[#9B9BA6]" data-sd-id="38">Beş adımda videonuz yayına hazır hale gelir.</p>
                 </div>
-              </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4" data-sd-id="39">
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] relative overflow-hidden group" data-sd-id="40">
+                        <div class="text-[40px] font-bold text-[#ffffff08] absolute -right-2 -bottom-2 leading-none group-hover:text-indigo-500/10 transition-colors" data-sd-id="41">1</div>
+                        <div class="bg-indigo-500/10 w-8 h-8 rounded-lg flex items-center justify-center mb-4 border border-indigo-500/20" data-sd-id="42">
+                            <iconify-icon icon="lucide:mouse-pointer-click" class="text-indigo-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-bold text-[14px] mb-2" data-sd-id="43">Videoyu bırak</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-snug" data-sd-id="44">MP4 veya MOV dosyasını pencereye sürükle.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] relative overflow-hidden group" data-sd-id="45">
+                        <div class="text-[40px] font-bold text-[#ffffff08] absolute -right-2 -bottom-2 leading-none group-hover:text-indigo-500/10 transition-colors" data-sd-id="46">2</div>
+                        <div class="bg-indigo-500/10 w-8 h-8 rounded-lg flex items-center justify-center mb-4 border border-indigo-500/20" data-sd-id="47">
+                            <iconify-icon icon="lucide:audio-waveform" class="text-indigo-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-bold text-[14px] mb-2" data-sd-id="48">Ses çıkar</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-snug" data-sd-id="49">ffmpeg 16 kHz mono WAV dosyası üretir.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] relative overflow-hidden group" data-sd-id="50">
+                        <div class="text-[40px] font-bold text-[#ffffff08] absolute -right-2 -bottom-2 leading-none group-hover:text-indigo-500/10 transition-colors" data-sd-id="51">3</div>
+                        <div class="bg-indigo-500/10 w-8 h-8 rounded-lg flex items-center justify-center mb-4 border border-indigo-500/20" data-sd-id="52">
+                            <iconify-icon icon="lucide:mic" class="text-indigo-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-bold text-[14px] mb-2" data-sd-id="53">Yerel döküş</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-snug" data-sd-id="54">whisper.cpp Türkçe yazıya çevirir, internetsiz.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] relative overflow-hidden group" data-sd-id="55">
+                        <div class="text-[40px] font-bold text-[#ffffff08] absolute -right-2 -bottom-2 leading-none group-hover:text-indigo-500/10 transition-colors" data-sd-id="56">4</div>
+                        <div class="bg-indigo-500/10 w-8 h-8 rounded-lg flex items-center justify-center mb-4 border border-indigo-500/20" data-sd-id="57">
+                            <iconify-icon icon="lucide:sparkles" class="text-indigo-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-bold text-[14px] mb-2" data-sd-id="58">Metinleri üret</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-snug" data-sd-id="59">MiniMax M3.1 Flash üç ayrı çağrıda çalışır.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] relative overflow-hidden group" data-sd-id="60">
+                        <div class="text-[40px] font-bold text-[#ffffff08] absolute -right-2 -bottom-2 leading-none group-hover:text-indigo-500/10 transition-colors" data-sd-id="61">5</div>
+                        <div class="bg-indigo-500/10 w-8 h-8 rounded-lg flex items-center justify-center mb-4 border border-indigo-500/20" data-sd-id="62">
+                            <iconify-icon icon="lucide:copy" class="text-indigo-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-bold text-[14px] mb-2" data-sd-id="63">Kopyala ve kaydet</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-snug" data-sd-id="64">5 sekme, 5 dosya, tek tıkla panoya hazır.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen Gallery -->
+            <section id="ekran" class="py-20 border-b border-[#ffffff14]" data-sd-id="65">
+                <div class="mb-10 text-center max-w-2xl mx-auto" data-sd-id="66">
+                    <h2 class="text-2xl font-bold mb-3" data-sd-id="67">Uygulamadan Görüntüler</h2>
+                    <p class="text-[#9B9BA6]" data-sd-id="68">Yerel macOS deneyimi için tasarlanmış temiz ve odaklanmış arayüz.</p>
+                </div>
+                
+                <div class="flex justify-center mb-8 border-b border-[#ffffff14]" data-sd-id="69">
+                    <div class="flex gap-8 text-[13px] font-medium text-[#9B9BA6]" data-sd-id="70">
+                        <button onclick="switchTab('screen', 'drop')" id="tab-screen-drop" class="tab-active py-3 px-2 transition-all" data-sd-id="71">Sürükle bırak</button>
+                        <button onclick="switchTab('screen', 'process')" id="tab-screen-process" class="py-3 px-2 hover:text-white transition-all" data-sd-id="72">İşleniyor</button>
+                        <button onclick="switchTab('screen', 'result')" id="tab-screen-result" class="py-3 px-2 hover:text-white transition-all" data-sd-id="73">Sonuçlar</button>
+                    </div>
+                </div>
+
+                <div class="relative rounded-2xl border border-[#ffffff14] bg-[#1C1C21] shadow-xl overflow-hidden min-h-[500px]" data-sd-id="74">
+                    <img id="panel-screen-drop" src="/assets/app-dropzone.png" alt="Dropzone" class="w-full h-auto" data-sd-id="75">
+                    <img id="panel-screen-process" src="/assets/app-processing.png" alt="Processing" class="w-full h-auto panel-hidden" data-sd-id="76">
+                    <img id="panel-screen-result" src="/assets/app-results.png" alt="Results" class="w-full h-auto panel-hidden" data-sd-id="77">
+                </div>
+            </section>
+
+            <!-- Outputs -->
+            <section id="ciktilar" class="py-20 border-b border-[#ffffff14]" data-sd-id="78">
+                <div class="flex items-end justify-between mb-8" data-sd-id="79">
+                    <div data-sd-id="80">
+                        <h2 class="text-2xl font-bold mb-3" data-sd-id="81">Çıktı Örnekleri</h2>
+                        <p class="text-[#9B9BA6]" data-sd-id="82">Tek bir işlemden elde edilen 5 farklı türde profesyonel içerik.</p>
+                    </div>
+                </div>
+
+                <div class="bg-[#1C1C21] rounded-2xl border border-[#ffffff14] overflow-hidden" data-sd-id="83">
+                    <div class="flex border-b border-[#ffffff14] overflow-x-auto no-scrollbar" data-sd-id="84">
+                        <button onclick="switchTab('output', 'srt')" id="tab-output-srt" class="tab-active py-4 px-6 text-[13px] font-medium whitespace-nowrap" data-sd-id="85">Altyazı (SRT)</button>
+                        <button onclick="switchTab('output', 'chapters')" id="tab-output-chapters" class="py-4 px-6 text-[13px] font-medium hover:text-white whitespace-nowrap" data-sd-id="86">Bölümler</button>
+                        <button onclick="switchTab('output', 'desc')" id="tab-output-desc" class="py-4 px-6 text-[13px] font-medium hover:text-white whitespace-nowrap" data-sd-id="87">Açıklama</button>
+                        <button onclick="switchTab('output', 'titles')" id="tab-output-titles" class="py-4 px-6 text-[13px] font-medium hover:text-white whitespace-nowrap" data-sd-id="88">Başlıklar</button>
+                        <button onclick="switchTab('output', 'tags')" id="tab-output-tags" class="py-4 px-6 text-[13px] font-medium hover:text-white whitespace-nowrap" data-sd-id="89">Etiketler</button>
+                    </div>
+                    
+                    <div class="p-8 relative min-h-[300px]" data-sd-id="90">
+                        <button class="absolute top-6 right-8 flex items-center gap-2 bg-[#232329] hover:bg-[#2d2d35] border border-[#ffffff14] px-3 py-1.5 rounded-lg text-[12px] font-medium text-white transition-colors" data-sd-id="91">
+                            <iconify-icon icon="lucide:copy"></iconify-icon> Kopyala
+                        </button>
+
+                        <div id="panel-output-srt" class="mono text-[14px] text-[#9B9BA6] leading-relaxed" data-sd-id="92">
+                            <span class="text-indigo-400" data-sd-id="93">1</span><br>
+                            00:00:00,000 --&gt; 00:00:04,830<br>
+                            Arkadaşlar, size inanılmaz bir şey söyleyeceğim.<br><br>
+                            <span class="text-indigo-400" data-sd-id="94">2</span><br>
+                            00:00:04,830 --&gt; 00:00:09,520<br>
+                            Evde kendi ineğinizi beslemek. Evet, bu çılgınca
+                        </div>
+
+                        <div id="panel-output-chapters" class="panel-hidden space-y-3" data-sd-id="95">
+                            <div class="flex gap-4" data-sd-id="96"><span class="mono text-indigo-400 font-medium" data-sd-id="97">00:00</span> <span class="text-[#EDEDF0]" data-sd-id="98">Evde İnek Beslemenin Hayat Değiştirebilirliği</span></div>
+                            <div class="flex gap-4" data-sd-id="99"><span class="mono text-indigo-400 font-medium" data-sd-id="100">00:10</span> <span class="text-[#EDEDF0]" data-sd-id="101">Taze ve Katkısız Sütün Tadı</span></div>
+                            <div class="flex gap-4" data-sd-id="102"><span class="mono text-indigo-400 font-medium" data-sd-id="103">00:21</span> <span class="text-[#EDEDF0]" data-sd-id="104">Ev Yapımı Peynir ve Yoğurt İmkânları</span></div>
+                            <div class="flex gap-4" data-sd-id="105"><span class="mono text-indigo-400 font-medium" data-sd-id="106">00:33</span> <span class="text-[#EDEDF0]" data-sd-id="107">Sürdürülebilirlik ve Çevreye Katkı</span></div>
+                            <div class="flex gap-4" data-sd-id="108"><span class="mono text-indigo-400 font-medium" data-sd-id="109">00:44</span> <span class="text-[#EDEDF0]" data-sd-id="110">İneklerin Dayanıklılığı ve Bakımı</span></div>
+                            <div class="flex gap-4" data-sd-id="111"><span class="mono text-indigo-400 font-medium" data-sd-id="112">00:55</span> <span class="text-[#EDEDF0]" data-sd-id="113">Özgür Üretimin Verdiği Mutluluk</span></div>
+                            <div class="flex gap-4" data-sd-id="114"><span class="mono text-indigo-400 font-medium" data-sd-id="115">01:05</span> <span class="text-[#EDEDF0]" data-sd-id="116">Market Sütten Vazgeçip Sığır Beslemek</span></div>
+                        </div>
+
+                        <div id="panel-output-desc" class="panel-hidden space-y-4 text-[15px] leading-relaxed text-[#EDEDF0] max-w-3xl" data-sd-id="117">
+                            <p data-sd-id="118">Evde kendi ineğinizi beslemek, taze ve katkısız süt elde etmenin yanı sıra sürdürülebilir yaşama önemli bir katkı sağlayabilir. Doğru bakım ve uygun koşullar altında inekler uzun yıllar boyunca sizinle olabilir.</p>
+                            <p data-sd-id="119">Kendi sütünüzü kullanarak neşkübü peynir, yoğurt ve daha fazla gıda üretebilir, üretim sürecini kontrol edebilirsiniz. Evde sığır beslemenin zorluklarını ve dikkat edilmesi gerekenleri bu videoda öğrenebilirsiniz.</p>
+                        </div>
+
+                        <div id="panel-output-titles" class="panel-hidden space-y-3" data-sd-id="120">
+                            <div class="flex items-center gap-3" data-sd-id="121"><iconify-icon icon="lucide:check" class="text-green-500"></iconify-icon> <span data-sd-id="122">Evde Sığır Beslemenin Hayatınıza Katkıları</span></div>
+                            <div class="flex items-center gap-3" data-sd-id="123"><iconify-icon icon="lucide:check" class="text-green-500"></iconify-icon> <span data-sd-id="124">Kendi Sütünüzü Üretmenin Keyfi</span></div>
+                            <div class="flex items-center gap-3" data-sd-id="125"><iconify-icon icon="lucide:check" class="text-green-500"></iconify-icon> <span data-sd-id="126">Evde İnek Beslemek Neden İyi Bir Fikir?</span></div>
+                            <div class="flex items-center gap-3" data-sd-id="127"><iconify-icon icon="lucide:check" class="text-green-500"></iconify-icon> <span data-sd-id="128">Taze Süt ve Sürdürülebilir Yaşam</span></div>
+                            <div class="flex items-center gap-3" data-sd-id="129"><iconify-icon icon="lucide:check" class="text-green-500"></iconify-icon> <span data-sd-id="130">Evde Sığır Beslemenin İpuçları</span></div>
+                        </div>
+
+                        <div id="panel-output-tags" class="panel-hidden" data-sd-id="131">
+                            <div class="flex flex-wrap gap-2" data-sd-id="132">
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="133">Evde sığır besleme</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="134">İnek besleme</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="135">Evde inek</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="136">Taze süt</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="137">Katkısız süt</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="138">Sürdürülebilirlik</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="139">Süt üretimi</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="140">Ev yapımı yoğurt</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="141">Neşkübü peynir</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="142">Doğal gıda</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="143">Kendi üretiminiz</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="144">İnek bakımı</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="145">Köy hayatı</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="146">Gıda üretimi</span>
+                                <span class="bg-[#232329] px-3 py-1.5 rounded-lg border border-[#ffffff14] text-[13px]" data-sd-id="147">Çevre dostu yaşam</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Grid -->
+            <section class="py-20 border-b border-[#ffffff14]" data-sd-id="148">
+                <div class="mb-12" data-sd-id="149">
+                    <h2 class="text-2xl font-bold mb-4" data-sd-id="150">Neden ayrı?</h2>
+                    <p class="text-[#9B9BA6]" data-sd-id="151">Bir geliştirici aracı hassasiyeti ve sadeliğiyle.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-sd-id="152">
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="153">
+                        <iconify-icon icon="lucide:clock" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="154">Zaman damgaları korunur</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="155">Model yalnızca metni düzeltir. Zamanlama Whisper çıktısından gelir, yapay zekâ dokunamaz.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="156">
+                        <iconify-icon icon="lucide:shield-check" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="157">Döküş tamamen yerelde</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="158">whisper.cpp çevrimdışı çalışır. İnternetten sadece düzeltilmiş metinler gider.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="159">
+                        <iconify-icon icon="lucide:bar-chart-3" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="160">Gerçek token sayacı</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="161">Giriş ve çıktı tokenları API yanıtındaki kullanımdan okunur, tahmin edilmez.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="162">
+                        <iconify-icon icon="lucide:code-2" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="163">Kurallar koda gömülü</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="164">İlk bölüm 00:00, en az 3 bölüm, bölümler arası en az 10 saniye gibi teknik kurallar katıdır.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="165">
+                        <iconify-icon icon="lucide:folder-output" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="166">Dosyalar yanına yazılır</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="167">Beş çıktı, videonun bulunduğu klasöre standart adlarla otomatik kaydedilir.</p>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14]" data-sd-id="168">
+                        <iconify-icon icon="lucide:cpu" class="text-2xl text-indigo-400 mb-4"></iconify-icon>
+                        <h3 class="font-bold text-[15px] mb-2" data-sd-id="169">Uzun video da donmaz</h3>
+                        <p class="text-[13px] text-[#9B9BA6] leading-relaxed" data-sd-id="170">İşlem arka planda yürür, arayüz her an yanıt verir, ilerleme adım adım izlenir.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Token KPI Section -->
+            <section class="py-20 border-b border-[#ffffff14]" data-sd-id="171">
+                <div class="mb-12" data-sd-id="172">
+                    <h2 class="text-2xl font-bold mb-4" data-sd-id="173">Token kullanımı</h2>
+                    <p class="text-[#9B9BA6]" data-sd-id="174">70 saniyelik bir videonun gerçek işlem verileri.</p>
+                </div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" data-sd-id="175">
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] flex flex-col items-center text-center" data-sd-id="176">
+                        <span class="text-[11px] font-bold text-[#9B9BA6] uppercase tracking-widest mb-2" data-sd-id="177">Girdi</span>
+                        <span class="text-3xl font-bold mono text-white" data-sd-id="178">2.778</span>
+                        <span class="text-[12px] text-[#9B9BA6] mt-1" data-sd-id="179">token</span>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] flex flex-col items-center text-center" data-sd-id="180">
+                        <span class="text-[11px] font-bold text-[#9B9BA6] uppercase tracking-widest mb-2" data-sd-id="181">Çıktı</span>
+                        <span class="text-3xl font-bold mono text-white" data-sd-id="182">4.477</span>
+                        <span class="text-[12px] text-[#9B9BA6] mt-1" data-sd-id="183">token</span>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] flex flex-col items-center text-center" data-sd-id="184">
+                        <span class="text-[11px] font-bold text-[#9B9BA6] uppercase tracking-widest mb-2" data-sd-id="185">Toplam</span>
+                        <span class="text-3xl font-bold mono text-white" data-sd-id="186">7.255</span>
+                        <span class="text-[12px] text-[#9B9BA6] mt-1" data-sd-id="187">token</span>
+                    </div>
+                    <div class="bg-[#1C1C21] p-6 rounded-2xl border border-[#ffffff14] flex flex-col items-center text-center" data-sd-id="188">
+                        <span class="text-[11px] font-bold text-[#9B9BA6] uppercase tracking-widest mb-2" data-sd-id="189">Thinking</span>
+                        <span class="text-3xl font-bold mono text-indigo-400" data-sd-id="190">3.368</span>
+                        <span class="text-[12px] text-[#9B9BA6] mt-1" data-sd-id="191">token</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Installation Section -->
+            <section id="kurulum" class="py-20" data-sd-id="192">
+                <div class="mb-12" data-sd-id="193">
+                    <h2 class="text-2xl font-bold mb-4" data-sd-id="194">Kurulum</h2>
+                    <p class="text-[#9B9BA6]" data-sd-id="195">Uygulamayı kullanmak için gerekli olan yerel bileşenleri kurun.</p>
+                </div>
+                <div class="space-y-12" data-sd-id="196">
+                    <div class="flex gap-6" data-sd-id="197">
+                        <div class="bg-indigo-500/10 w-10 h-10 rounded-full flex items-center justify-center border border-indigo-500/20 shrink-0 mt-1" data-sd-id="198">
+                            <span class="font-bold text-indigo-400" data-sd-id="199">1</span>
+                        </div>
+                        <div class="space-y-4 w-full" data-sd-id="200">
+                            <div data-sd-id="201">
+                                <h3 class="font-bold text-[16px]" data-sd-id="202">Araçları kurun</h3>
+                                <p class="text-[14px] text-[#9B9BA6]" data-sd-id="203">ffmpeg sesi çıkarır, whisper.cpp döküşü yapar.</p>
+                            </div>
+                            <div class="bg-[#1C1C21] rounded-xl border border-[#ffffff14] p-4 flex items-center justify-between group" data-sd-id="204">
+                                <code class="mono text-[13px] text-[#EDEDF0]">brew install ffmpeg whisper.cpp</code>
+                                <button class="text-[#9B9BA6] hover:text-white transition-colors" data-sd-id="205"><iconify-icon icon="lucide:copy"></iconify-icon></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-6" data-sd-id="206">
+                        <div class="bg-indigo-500/10 w-10 h-10 rounded-full flex items-center justify-center border border-indigo-500/20 shrink-0 mt-1" data-sd-id="207">
+                            <span class="font-bold text-indigo-400" data-sd-id="208">2</span>
+                        </div>
+                        <div class="space-y-4 w-full" data-sd-id="209">
+                            <div data-sd-id="210">
+                                <h3 class="font-bold text-[16px]" data-sd-id="211">Whisper modelini indirin</h3>
+                                <p class="text-[14px] text-[#9B9BA6]" data-sd-id="212">Türkçe için large-v3-turbo modeli (~1,6 GB) kullanılır.</p>
+                            </div>
+                            <div class="bg-[#1C1C21] rounded-xl border border-[#ffffff14] p-4 flex items-start justify-between group" data-sd-id="213">
+                                <code class="mono text-[13px] text-[#EDEDF0] break-all leading-relaxed">
+                                    mkdir -p ~/Library/Application\ Support/VideoAsistant/models<br>
+                                    curl -L -C - -o ~/Library/Application\ Support/VideoAsistant/models/ggml-large-v3-turbo.bin \ <br>
+                                    &nbsp;&nbsp;https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin
+                                </code>
+                                <button class="text-[#9B9BA6] hover:text-white transition-colors pt-1" data-sd-id="214"><iconify-icon icon="lucide:copy"></iconify-icon></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-6" data-sd-id="215">
+                        <div class="bg-indigo-500/10 w-10 h-10 rounded-full flex items-center justify-center border border-indigo-500/20 shrink-0 mt-1" data-sd-id="216">
+                            <span class="font-bold text-indigo-400" data-sd-id="217">3</span>
+                        </div>
+                        <div class="space-y-4 w-full" data-sd-id="218">
+                            <div data-sd-id="219">
+                                <h3 class="font-bold text-[16px]" data-sd-id="220">Anahtarı girin</h3>
+                                <p class="text-[14px] text-[#9B9BA6]" data-sd-id="221">Uygulama ilk açılışta MiniMax API anahtarını ister ve macOS Keychain'e kaydeder.</p>
+                            </div>
+                            <div class="bg-[#1C1C21] rounded-xl border border-[#ffffff14] p-4 flex items-center justify-between group" data-sd-id="222">
+                                <code class="mono text-[13px] text-[#EDEDF0]">export MINIMAX_API_KEY="..."</code>
+                                <button class="text-[#9B9BA6] hover:text-white transition-colors" data-sd-id="223"><iconify-icon icon="lucide:copy"></iconify-icon></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="w-full border-t border-[#ffffff14] py-12 mt-20" data-sd-id="224">
+            <div class="max-w-[1120px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8 text-[13px] text-[#9B9BA6]" data-sd-id="225">
+                <div class="flex items-center gap-3" data-sd-id="226">
+                    <img src="/assets/icon.png" alt="Logo" class="w-6 h-6 grayscale opacity-50" data-sd-id="227">
+                    <span data-sd-id="228">© 2026 VideoAsistan · Erhan Meydan tarafından geliştirildi.</span>
+                </div>
+                <div class="flex gap-8 font-medium" data-sd-id="229">
+                    <a href="https://github.com/erhanmeydan/VideoAsistant" id="footer-link-github" class="hover:text-white transition-colors" data-sd-id="230">GitHub</a>
+                    <a href="https://github.com/erhanmeydan/VideoAsistant/releases/tag/v1.0.0" id="footer-link-version" class="hover:text-white transition-colors" data-sd-id="231">Sürüm 1.0.0</a>
+                    <a href="https://github.com/erhanmeydan/VideoAsistant/blob/main/LICENSE" id="footer-link-license" class="hover:text-white transition-colors" data-sd-id="232">MIT Lisansı</a>
+                </div>
             </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <div class="wrap footer-inner">
-        <p>VideoAsistan · MIT lisansı ile açık kaynak · Erhan Meydan</p>
-        <div class="footer-links">
-          <a id="link-hrefhttpsgithubcomerhanmeydanvideoasista" href="https://github.com/erhanmeydan/VideoAsistant">GitHub</a>
-          <a id="link-hrefhttpsgithubcomerhanmeydanvideoasista-2" href="https://github.com/erhanmeydan/VideoAsistant/releases/tag/v1.0.0">Sürüm 1.0.0</a>
-          <a id="link-hrefhttpsgithubcomerhanmeydanvideoasista-2-3" href="https://github.com/erhanmeydan/VideoAsistant/blob/main/LICENSE">Lisans</a>
-        </div>
-      </div>
-    </footer>
-
-    <div class="toast" id="toast" role="status" aria-live="polite">Kopyalandı</div>
+        </footer>
+    </div>
 
     <script>
-      (function () {
-        'use strict';
+        function switchTab(type, id) {
+            // Screen tabs
+            if (type === 'screen') {
+                const tabs = ['drop', 'process', 'result'];
+                tabs.forEach(t => {
+                    const tabBtn = document.getElementById(`tab-screen-${t}`);
+                    const panel = document.getElementById(`panel-screen-${t}`);
+                    if (t === id) {
+                        tabBtn.classList.add('tab-active');
+                        tabBtn.classList.remove('hover:text-white');
+                        panel.classList.remove('panel-hidden');
+                    } else {
+                        tabBtn.classList.remove('tab-active');
+                        tabBtn.classList.add('hover:text-white');
+                        panel.classList.add('panel-hidden');
+                    }
+                });
+            }
+            
+            // Output tabs
+            if (type === 'output') {
+                const tabs = ['srt', 'chapters', 'desc', 'titles', 'tags'];
+                tabs.forEach(t => {
+                    const tabBtn = document.getElementById(`tab-output-${t}`);
+                    const panel = document.getElementById(`panel-output-${t}`);
+                    if (t === id) {
+                        tabBtn.classList.add('tab-active');
+                        tabBtn.classList.remove('hover:text-white');
+                        panel.classList.remove('panel-hidden');
+                    } else {
+                        tabBtn.classList.remove('tab-active');
+                        tabBtn.classList.add('hover:text-white');
+                        panel.classList.add('panel-hidden');
+                    }
+                });
+            }
+        }
+    
+        // ---- Tema ----
+        (function () {
+            var root = document.documentElement;
+            var button = document.getElementById('theme-btn');
+            var stored = null;
+            try { stored = window.localStorage.getItem('va-theme'); } catch (error) { stored = null; }
+            if (!stored) {
+                var match = document.cookie.match(/(?:^|;\s*)va-theme=([^;]+)/);
+                stored = match ? decodeURIComponent(match[1]) : null;
+            }
+            if (stored === 'light') root.classList.add('light');
 
-        var toastTimer = null;
-        var toast = document.getElementById('toast');
+            function persist(value) {
+                try { window.localStorage.setItem('va-theme', value); } catch (error) { /* yoksay */ }
+                document.cookie = 'va-theme=' + encodeURIComponent(value) + '; path=/; max-age=31536000; SameSite=Lax';
+            }
 
+            if (button) {
+                button.addEventListener('click', function () {
+                    var light = root.classList.toggle('light');
+                    persist(light ? 'light' : 'dark');
+                    var icon = button.querySelector('iconify-icon');
+                    if (icon) icon.setAttribute('icon', light ? 'lucide:sun' : 'lucide:moon');
+                    showToast(light ? 'Açık tema' : 'Koyu tema');
+                });
+            }
+        })();
+
+        // ---- Panoya kopyalama ----
         function showToast(message) {
-          if (!toast) return;
-          toast.textContent = message;
-          toast.classList.add('is-visible');
-          if (toastTimer) window.clearTimeout(toastTimer);
-          toastTimer = window.setTimeout(function () {
-            toast.classList.remove('is-visible');
-          }, 1600);
+            var toast = document.getElementById('site-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'site-toast';
+                toast.setAttribute('role', 'status');
+                toast.setAttribute('aria-live', 'polite');
+                toast.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translate(-50%,12px);'
+                    + 'padding:10px 16px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;'
+                    + 'transition:opacity .18s ease-out,transform .18s ease-out;z-index:60;'
+                    + 'background:#EDEDF0;color:#131316;box-shadow:0 8px 24px rgba(0,0,0,.28);';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, 0)';
+            window.clearTimeout(window.__vaToastTimer);
+            window.__vaToastTimer = window.setTimeout(function () {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 12px)';
+            }, 1600);
         }
 
         function copyText(text) {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            return navigator.clipboard.writeText(text);
-          }
-          var area = document.createElement('textarea');
-          area.value = text;
-          area.setAttribute('readonly', '');
-          area.style.position = 'fixed';
-          area.style.opacity = '0';
-          document.body.appendChild(area);
-          area.select();
-          try {
-            document.execCommand('copy');
-          } finally {
-            document.body.removeChild(area);
-          }
-          return Promise.resolve();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            document.body.appendChild(area);
+            area.select();
+            try { document.execCommand('copy'); } finally { document.body.removeChild(area); }
+            return Promise.resolve();
         }
 
-        // Sekmeler
-        function setupTabs(tabList) {
-          var tabs = Array.prototype.slice.call(tabList.querySelectorAll('[role="tab"]'));
-          function select(tab) {
-            tabs.forEach(function (item) {
-              var selected = item === tab;
-              item.setAttribute('aria-selected', selected ? 'true' : 'false');
-              var panel = document.getElementById(item.getAttribute('aria-controls'));
-              if (panel) panel.classList.toggle('is-active', selected);
-            });
-          }
-          tabs.forEach(function (tab, index) {
-            tab.addEventListener('click', function () {
-              select(tab);
-            });
-            tab.addEventListener('keydown', function (event) {
-              var next = null;
-              if (event.key === 'ArrowRight') next = tabs[(index + 1) % tabs.length];
-              if (event.key === 'ArrowLeft') next = tabs[(index - 1 + tabs.length) % tabs.length];
-              if (event.key === 'Home') next = tabs[0];
-              if (event.key === 'End') next = tabs[tabs.length - 1];
-              if (next) {
-                event.preventDefault();
-                next.focus();
-                select(next);
-              }
-            });
-          });
-        }
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest ? event.target.closest('button') : null;
+            if (!button) return;
 
-        Array.prototype.forEach.call(document.querySelectorAll('[role="tablist"]'), setupTabs);
+            // Kurulum kod blokları kopyalama düğmeleri
+            var code = button.parentElement ? button.parentElement.querySelector('code') : null;
+            if (code) {
+                copyText(code.innerText.trim()).then(function () { showToast('Kopyalandı'); });
+                return;
+            }
 
-        // Kopyalama düğmeleri
-        Array.prototype.forEach.call(document.querySelectorAll('[data-copy]'), function (button) {
-          button.addEventListener('click', function () {
-            var target = document.querySelector(button.getAttribute('data-copy'));
-            if (!target) return;
-            copyText(target.innerText.trim()).then(function () {
-              showToast('Kopyalandı');
-            });
-          });
+            // Çıktı sekmesi kopyalama düğmesi
+            if (button.querySelector('iconify-icon[icon="lucide:copy"]')) {
+                var active = document.querySelector('#panel-output-srt:not(.panel-hidden), '
+                    + '#panel-output-chapters:not(.panel-hidden), #panel-output-desc:not(.panel-hidden), '
+                    + '#panel-output-titles:not(.panel-hidden), #panel-output-tags:not(.panel-hidden)');
+                if (!active) return;
+                var text = (active.innerText || '').trim();
+                if (!text) return;
+                copyText(text).then(function () { showToast('Kopyalandı'); });
+            }
         });
+</script>
 
-        Array.prototype.forEach.call(document.querySelectorAll('[data-copy-code]'), function (button) {
-          button.addEventListener('click', function () {
-            var block = button.closest('.code');
-            if (!block) return;
-            var code = block.querySelector('pre');
-            if (!code) return;
-            copyText(code.innerText.trim()).then(function () {
-              showToast('Kopyalandı');
-            });
-          });
-        });
-
-        // Tema
-        var root = document.documentElement;
-        var themeButton = document.getElementById('theme-toggle');
-        var order = ['auto', 'light', 'dark'];
-
-        // Tercih hem localStorage'da hem çerezde saklanır; çerez, sayfa yeniden
-        // yüklendiğinde de değeri korur.
-        function readStoredTheme() {
-          try {
-            var value = window.localStorage.getItem('va-theme');
-            if (value) return value;
-          } catch (error) {
-            /* localStorage kapalı olabilir */
-          }
-          var match = document.cookie.match(/(?:^|;\s*)va-theme=([^;]+)/);
-          return match ? decodeURIComponent(match[1]) : null;
-        }
-
-        function storeTheme(value) {
-          try {
-            window.localStorage.setItem('va-theme', value);
-          } catch (error) {
-            /* localStorage kapalı olabilir */
-          }
-          document.cookie = 'va-theme=' + encodeURIComponent(value) + '; path=/; max-age=31536000; SameSite=Lax';
-        }
-
-        var stored = readStoredTheme();
-        root.setAttribute('data-theme', order.indexOf(stored) === -1 ? 'auto' : stored);
-
-        if (themeButton) {
-          themeButton.addEventListener('click', function () {
-            var current = root.getAttribute('data-theme');
-            var next = order[(order.indexOf(current) + 1) % order.length];
-            root.setAttribute('data-theme', next);
-            storeTheme(next);
-            showToast('Tema: ' + (next === 'auto' ? 'sistem' : next === 'light' ? 'açık' : 'koyu'));
-          });
-        }
-      })();
-    </script>
-    </div>
-  </body>
-</html>
+</body></html>
