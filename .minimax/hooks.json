@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "name": "Proje kuralları",
+            "command": "sh \"${MINIMAX_PROJECT_DIR}/Tools/hooks/project-rules.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "bash",
+        "hooks": [
+          {
+            "type": "command",
+            "name": "Geri döndürülemez komut koruması",
+            "command": "sh \"${MINIMAX_PROJECT_DIR}/Tools/hooks/guard-destructive.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "edit|write",
+        "hooks": [
+          {
+            "type": "command",
+            "name": "Site CSS'ini yeniden derle",
+            "command": "sh \"${MINIMAX_PROJECT_DIR}/Tools/hooks/rebuild-site-css.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "name": "Commit kontrolü",
+            "command": "sh \"${MINIMAX_PROJECT_DIR}/Tools/hooks/check-uncommitted.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

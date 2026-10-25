@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Tanıtım sitesinin Tailwind CSS'ini yeniden derler ve HTML'e gömer.
+# Tanıtım sitesinin Tailwind CSS'ini yeniden derler ve HTML'e gömber.
 #
 #   ./Tools/build_site_css.sh
 #
@@ -8,8 +8,8 @@
 # site dış bağımlılık olmadan, çevrimdışı da çalışır. Play CDN Tailwind v3
 # kullandığı için derleme de v3 ile yapılır (görsel birebir aynı kalır).
 #
-# Gerekli: node + npm (yalnızca bu betik için; depo bağımlılığı yoktur)
-#   npm install --no-save tailwindcss@3.4.17
+# Tailwind kurulumu kalıcı önbelleğe yapılır; ikinci ve sonraki çalıştırmalar
+# ~0,3 saniye sürer (MiniMax Code hook zaman aşımı için önemli).
 
 set -euo pipefail
 
@@ -17,13 +17,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 CLIENT="miniapps/video-asistan-site/miniapp/client/index.html"
-BUILD="$(mktemp -d)"
-trap 'rm -rf "$BUILD"' EXIT
+TOOL_DIR="${VIDEOASISTANT_TAILWINDIR:-$HOME/.cache/videoasistant-tailwind}"
+BUILD="$TOOL_DIR/build"
 
-echo "==> Bağımlılık kuruluyor (geçici)"
+echo "==> Tailwind hazırlanıyor"
+if [ ! -d "$TOOL_DIR/node_modules/tailwindcss" ]; then
+  echo "    (ilk kurulum, ~10 sn)"
+  mkdir -p "$TOOL_DIR"
+  cd "$TOOL_DIR"
+  npm init -y >/dev/null 2>&1
+  npm install --silent --no-save tailwindcss@3.4.17
+fi
+
+mkdir -p "$BUILD/site"
 cd "$BUILD"
-npm init -y >/dev/null 2>&1
-npm install --silent --no-save tailwindcss@3.4.17
 
 cat > tailwind.config.js <<'JS'
 module.exports = {
@@ -39,11 +46,10 @@ cat > input.css <<'CSS'
 @tailwind utilities;
 CSS
 
-mkdir -p site
 cp "$ROOT/$CLIENT" site/index.html
 
 echo "==> CSS derleniyor"
-npx tailwindcss -c tailwind.config.js -i input.css -o output.css --minify
+npx --no-install tailwindcss -c tailwind.config.js -i input.css -o output.css --minify
 
 echo "==> HTML'e gömülüyor"
 cd "$ROOT"
