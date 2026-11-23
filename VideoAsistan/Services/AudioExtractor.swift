@@ -1,6 +1,6 @@
 import Foundation
 
-/// ffmpeg ile videodan ses çıkarır ve video süresini ölçer.
+/// ffmpeg ile video veya ses dosyasından 16 kHz mono WAV üretir ve süreyi ölçer.
 enum AudioExtractor {
     enum ExtractionError: LocalizedError {
         case ffmpegNotFound
@@ -15,29 +15,29 @@ enum AudioExtractor {
             case .probeNotFound:
                 return "ffprobe bulunamadı. Kurulum: brew install ffmpeg"
             case .noAudioStream:
-                return "Videoda ses akışı bulunamadı."
+                return "Dosyada ses akışı bulunamadı."
             case .processFailed(let detail):
-                return "Ses çıkarılamadı. \(detail)"
+                return "Ses işlenemedi. \(detail)"
             }
         }
     }
 
     /// Whisper'ın beklediği biçimde (16 kHz, mono, 16-bit PCM) WAV üretir.
     static func extractAudio(
-        from video: URL,
+        from source: URL,
         into workDirectory: URL,
         onProgress: (@Sendable (Double) -> Void)? = nil
     ) async throws -> URL {
         guard let ffmpeg = ToolLocator.ffmpeg else { throw ExtractionError.ffmpegNotFound }
 
         let output = workDirectory.appendingPathComponent("audio.wav")
-        let duration = (try? await videoDuration(at: video)) ?? 0
+        let duration = (try? await duration(of: source)) ?? 0
 
         let arguments = [
             "-hide_banner",
             "-nostdin",
             "-y",
-            "-i", video.path,
+            "-i", source.path,
             "-map", "0:a:0",
             "-vn",
             "-ac", "1",
@@ -73,7 +73,7 @@ enum AudioExtractor {
     }
 
     /// ffprobe ile video süresini (saniye) döndürür.
-    static func videoDuration(at video: URL) async throws -> Double {
+    static func duration(of source: URL) async throws -> Double {
         guard let ffprobe = ToolLocator.ffprobe else { throw ExtractionError.probeNotFound }
         let result = try await ProcessRunner.run(
             executable: ffprobe,
@@ -81,7 +81,7 @@ enum AudioExtractor {
                 "-v", "error",
                 "-show_entries", "format=duration",
                 "-of", "default=nw=1:nk=1",
-                video.path
+                source.path
             ],
             toolName: "ffprobe"
         )

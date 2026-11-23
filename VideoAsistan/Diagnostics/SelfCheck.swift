@@ -7,7 +7,7 @@ import Foundation
 enum SelfCheck {
     private static var failures = 0
 
-    static func run(videoPath: String?) -> Int32 {
+    static func run(sourcePath: String?) -> Int32 {
         failures = 0
 
         print("== VideoAsistan selfcheck ==")
@@ -45,8 +45,8 @@ enum SelfCheck {
         }
 
         // Video (varsa) ve saf metin dönüşümleri
-        if let videoPath {
-            checkVideo(at: videoPath)
+        if let sourcePath {
+            checkSource(at: sourcePath)
         }
         checkTextTransforms()
 
@@ -54,14 +54,14 @@ enum SelfCheck {
         return failures == 0 ? 0 : 1
     }
 
-    private static func checkVideo(at path: String) {
+    private static func checkSource(at path: String) {
         let url = URL(fileURLWithPath: path)
         guard FileManager.default.fileExists(atPath: url.path) else {
-            check(false, "Video dosyası bulunamadı", path)
+            check(false, "Dosya bulunamadı", path)
             return
         }
         let ext = url.pathExtension.lowercased()
-        check(ext == "mp4" || ext == "mov", "Video uzantısı destekleniyor", ext)
+        check(MediaKind.kind(of: URL(fileURLWithPath: path)) != nil, "Dosya uzantısı destekleniyor", ext)
 
         guard let ffprobe = ToolLocator.ffprobe else { return }
         let process = Process()

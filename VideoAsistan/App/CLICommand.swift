@@ -6,36 +6,36 @@ import Foundation
 /// bayraklar verildiğinde arayüz açılmadan konsola çalışır.
 enum CLICommand {
     /// Araç, model ve çıktı doğrulamaları.
-    case selfcheck(videoPath: String?)
+    case selfcheck(sourcePath: String?)
     /// MiniMax API bağlantı testi.
     case apiTest(prompt: String)
     /// Ses çıkarma ve yerel yazıya çevirme testi.
-    case transcribe(videoPath: String)
+    case transcribe(sourcePath: String)
     /// Uçtan uca çalıştırma (ffmpeg → whisper → MiniMax → dosya yazımı).
-    case smoke(videoPath: String)
+    case smoke(sourcePath: String)
 
     /// Komut satırı argümanlarından komutu çözer (komut yoksa nil).
     static func parse(arguments: [String]) -> CLICommand? {
         var iterator = arguments.dropFirst().makeIterator()
-        var videoPath: String?
+        var sourcePath: String?
 
         while let argument = iterator.next() {
             switch argument {
             case "--selfcheck":
-                videoPath = iterator.next()
-                return .selfcheck(videoPath: videoPath)
+                sourcePath = iterator.next()
+                return .selfcheck(sourcePath: sourcePath)
             case "--transcribe":
                 guard let path = iterator.next() else {
-                    print("HATA: --transcribe için video yolu gerekli. Kullanım: --transcribe <video.mp4>")
+                    print("HATA: --transcribe için dosya yolu gerekli. Kullanım: --transcribe <dosya.mp4>")
                     return nil
                 }
-                return .transcribe(videoPath: path)
+                return .transcribe(sourcePath: path)
             case "--smoke":
                 guard let path = iterator.next() else {
-                    print("HATA: --smoke için video yolu gerekli. Kullanım: --smoke <video.mp4>")
+                    print("HATA: --smoke için dosya yolu gerekli. Kullanım: --smoke <dosya.mp4>")
                     return nil
                 }
-                return .smoke(videoPath: path)
+                return .smoke(sourcePath: path)
             case "--apitest":
                 var prompt = "Kısa bir Türkçe tanıtım cümlesi yaz."
                 if let next = iterator.next(), !next.hasPrefix("--") {
@@ -68,14 +68,14 @@ enum CLICommand {
 
     private static func perform(_ command: CLICommand) async -> Int32 {
         switch command {
-        case .selfcheck(let videoPath):
-            return SelfCheck.run(videoPath: videoPath)
+        case .selfcheck(let sourcePath):
+            return SelfCheck.run(sourcePath: sourcePath)
         case .apiTest(let prompt):
             return await ApiTestRunner.run(prompt: prompt)
-        case .transcribe(let videoPath):
-            return await TranscribeRunner.run(videoPath: videoPath)
-        case .smoke(let videoPath):
-            return await SmokeRunner.run(videoPath: videoPath)
+        case .transcribe(let sourcePath):
+            return await TranscribeRunner.run(sourcePath: sourcePath)
+        case .smoke(let sourcePath):
+            return await SmokeRunner.run(sourcePath: sourcePath)
         }
     }
 }

@@ -17,13 +17,13 @@ struct ContentView: View {
                     isTargeted: controller.isDragTargeted
                 )
             case .processing:
-                ProcessingView(steps: controller.steps, videoName: controller.videoURL?.lastPathComponent ?? "")
+                ProcessingView(steps: controller.steps, inputName: controller.inputURL?.lastPathComponent ?? "")
             case .results:
                 if let content = controller.content {
                     ResultsView(
                         content: content,
-                        videoName: controller.videoURL?.lastPathComponent ?? "",
-                        durationSeconds: controller.videoDurationSeconds,
+                        inputName: controller.inputURL?.lastPathComponent ?? "",
+                        durationSeconds: controller.durationSeconds,
                         tokenUsage: controller.tokenUsage,
                         writtenFiles: controller.writtenFiles,
                         warnings: controller.warnings,

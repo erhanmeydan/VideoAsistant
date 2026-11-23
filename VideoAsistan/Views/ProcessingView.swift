@@ -3,14 +3,14 @@ import SwiftUI
 /// İşlem sırasında görünen adım listesi.
 struct ProcessingView: View {
     let steps: [ProcessingStepStatus]
-    let videoName: String
+    let inputName: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("İşleniyor")
                     .font(.title3.weight(.semibold))
-                Text(videoName)
+                Text(inputName)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -47,7 +47,7 @@ struct ProcessingView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
-                    Text(step.step.title)
+                    Text(step.displayTitle)
                         .font(.callout.weight(step.state == .active ? .semibold : .regular))
                         .foregroundStyle(step.state == .pending ? .secondary : .primary)
                     if let progress = step.progress, step.state == .active {

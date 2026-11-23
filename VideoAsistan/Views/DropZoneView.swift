@@ -27,7 +27,7 @@ struct DropZoneView: View {
                         .foregroundStyle(Color.accentColor)
                         .symbolEffect(.pulse, options: .repeating, isActive: isTargeted)
 
-                    Text("Videoyu buraya sürükle")
+                    Text("Videoyu veya sesi buraya sürükle")
                         .font(.title2.weight(.semibold))
 
                     Text("veya dosyayı seçin")
@@ -43,10 +43,11 @@ struct DropZoneView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
 
-                    Text("Desteklenen biçimler: MP4, MOV")
+                    Text("Desteklenen biçimler: \(MediaKind.supportedFormatsSummary)")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .padding(.top, 4)
+                        .multilineTextAlignment(.center)
                 }
                 .padding(40)
             }
@@ -60,10 +61,13 @@ struct DropZoneView: View {
 
     private func chooseFile() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.movie, .mpeg4Movie, .quickTimeMovie]
+        panel.allowedContentTypes = [
+            .movie, .mpeg4Movie, .quickTimeMovie,
+            .audio, .mp3, .wav, .mpeg4Audio, .aiff, .appleProtectedMPEG4Audio
+        ]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.message = "Sürükle-bırak yerine bir video dosyası seçin"
+        panel.message = "Sürükle-bırak yerine bir video veya ses dosyası seçin"
         if panel.runModal() == .OK, let url = panel.url {
             onFileSelected(url)
         }

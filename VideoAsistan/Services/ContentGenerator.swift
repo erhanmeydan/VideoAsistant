@@ -31,7 +31,7 @@ struct ContentGenerator {
     func generate(
         segments: [TranscriptSegment],
         videoDuration: Int,
-        videoName: String,
+        sourceName: String,
         onProgress: (@Sendable (String) -> Void)? = nil
     ) async throws -> GeneratedContent {
         var usage = TokenUsage.zero
@@ -57,7 +57,7 @@ struct ContentGenerator {
         do {
             let metadata = try await requestMetadata(
                 segments: segments,
-                videoName: videoName,
+                sourceName: sourceName,
                 videoDuration: videoDuration,
                 usage: &usage
             )
@@ -277,14 +277,14 @@ struct ContentGenerator {
 
     private func requestMetadata(
         segments: [TranscriptSegment],
-        videoName: String,
+        sourceName: String,
         videoDuration: Int,
         usage: inout TokenUsage
     ) async throws -> MetadataResult {
         let transcript = Self.plainTranscript(from: segments)
         let prompt = PromptTemplates.metadataUser(
             transcript: transcript,
-            videoName: videoName,
+            sourceName: sourceName,
             videoDuration: videoDuration
         )
 
@@ -330,7 +330,7 @@ struct ContentGenerator {
         }
 
         if titles.count < 5 {
-            let fillers = KeywordFallback.titles(from: transcript, videoName: videoName, needed: 5 - titles.count)
+            let fillers = KeywordFallback.titles(from: transcript, sourceName: sourceName, needed: 5 - titles.count)
             titles = TextSanitizer.normalizeTitles(titles + fillers, targetCount: 5)
             if titles.count < 5 {
                 warnings.append("Başlık sayısı 5'in altında kaldı.")
@@ -400,9 +400,9 @@ enum KeywordFallback {
             .map(\.key)
     }
 
-    static func titles(from transcript: String, videoName: String, needed: Int) -> [String] {
+    static func titles(from transcript: String, sourceName: String, needed: Int) -> [String] {
         guard needed > 0 else { return [] }
-        let base = videoName
+        let base = sourceName
             .replacingOccurrences(of: ".mp4", with: "")
             .replacingOccurrences(of: ".mov", with: "")
         var result: [String] = []

@@ -4,10 +4,10 @@ import Foundation
 ///
 /// ffmpeg → whisper.cpp → MiniMax (3 çağrı) → dosya yazımı.
 enum SmokeRunner {
-    static func run(videoPath: String) async -> Int32 {
-        let videoURL = URL(fileURLWithPath: videoPath)
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            print("HATA: Video bulunamadı: \(videoURL.path)")
+    static func run(sourcePath: String) async -> Int32 {
+        let sourceURL = URL(fileURLWithPath: sourcePath)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            print("HATA: Dosya bulunamadı: \(sourceURL.path)")
             return 1
         }
 
@@ -27,17 +27,17 @@ enum SmokeRunner {
 
         let start = Date()
         print("== Uçtan uca çalıştırma ==")
-        print("Video: \(videoURL.path)")
+        print("Giriş: \(sourceURL.path)")
 
         do {
-            let duration = Int(try await AudioExtractor.videoDuration(at: videoURL).rounded())
+            let duration = Int(try await AudioExtractor.duration(of: sourceURL).rounded())
             print(String(format: "Süre: %d sn", duration))
 
             let workDirectory = try AppPaths.makeWorkDirectory()
             defer { try? FileManager.default.removeItem(at: workDirectory) }
 
             print("[1/5] Ses çıkarılıyor…")
-            let audio = try await AudioExtractor.extractAudio(from: videoURL, into: workDirectory) { progress in
+            let audio = try await AudioExtractor.extractAudio(from: sourceURL, into: workDirectory) { progress in
                 print(String(format: "      ses: %%%d", Int(progress * 100)))
             }
 
@@ -52,13 +52,13 @@ enum SmokeRunner {
             let content = try await generator.generate(
                 segments: segments,
                 videoDuration: duration,
-                videoName: videoURL.lastPathComponent
+                sourceName: sourceURL.lastPathComponent
             ) { detail in
                 print("      \(detail)")
             }
 
             print("[4/5] Dosyalar kaydediliyor…")
-            let written = try FileExporter.export(content, nextTo: videoURL)
+            let written = try FileExporter.export(content, nextTo: sourceURL)
             for url in written {
                 print("      \(url.path)")
             }

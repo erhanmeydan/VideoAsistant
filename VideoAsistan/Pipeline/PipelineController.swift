@@ -22,41 +22,41 @@ final class PipelineController {
     private(set) var errorMessage: String?
     private(set) var warnings: [String] = []
     private(set) var writtenFiles: [URL] = []
-    private(set) var videoURL: URL?
-    private(set) var videoDurationSeconds: Int = 0
+    private(set) var inputURL: URL?
+    private(set) var inputKind: MediaKind?
+    private(set) var durationSeconds: Int = 0
 
     var isAPIKeySheetPresented = false
     var isDragTargeted = false
 
     private var task: Task<Void, Never>?
-    private var pendingVideoURL: URL?
+    private var pendingInputURL: URL?
 
     // MARK: - Giriş
 
-    /// Bırakılan veya seçilen video için işlemi başlatır.
+    /// Bırakılan veya seçilen video/ses dosyası için işlemi başlatır.
     func start(with url: URL) {
-        let fileExtension = url.pathExtension.lowercased()
-        guard fileExtension == "mp4" || fileExtension == "mov" else {
-            errorMessage = "Yalnızca .mp4 ve .mov dosyaları desteklenir."
+        guard let kind = MediaKind.kind(of: url) else {
+            errorMessage = "Yalnızca video (MP4, MOV, M4V) ve ses (MP3, WAV, M4A, AAC, FLAC, OGG) dosyaları desteklenir."
             phase = .failed
             return
         }
 
         guard FileManager.default.fileExists(atPath: url.path) else {
-            errorMessage = "Video dosyası bulunamadı."
+            errorMessage = kind == .audio ? "Ses dosyası bulunamadı." : "Video dosyası bulunamadı."
             phase = .failed
             return
         }
 
         do {
             guard let apiKey = try APIKeyProvider.apiKey(), !apiKey.isEmpty else {
-                pendingVideoURL = url
+                pendingInputURL = url
                 isAPIKeySheetPresented = true
                 return
             }
-            begin(with: url, apiKey: apiKey)
+            begin(with: url, kind: kind, apiKey: apiKey)
         } catch {
-            pendingVideoURL = url
+            pendingInputURL = url
             isAPIKeySheetPresented = true
         }
     }
@@ -66,9 +66,10 @@ final class PipelineController {
         do {
             try APIKeyProvider.store(key)
             isAPIKeySheetPresented = false
-            if let pending = pendingVideoURL {
-                pendingVideoURL = nil
-                begin(with: pending, apiKey: key)
+            if let pending = pendingInputURL {
+                pendingInputURL = nil
+                let kind = MediaKind.kind(of: pending) ?? .video
+                begin(with: pending, kind: kind, apiKey: key)
             }
             return nil
         } catch {
@@ -76,10 +77,10 @@ final class PipelineController {
         }
     }
 
-    /// Anahtar gerektiği hâlde kullanıcı iptal ederse bekleyen videoyu unut.
+    /// Anahtar gerektiği hâlde kullanıcı iptal ederse bekleyen dosyayı unut.
     func cancelAPIKeyRequest() {
         isAPIKeySheetPresented = false
-        pendingVideoURL = nil
+        pendingInputURL = nil
     }
 
     /// Uygulama ilk açılışta anahtar yoksa kullanıcıdan ister.
@@ -93,24 +94,29 @@ final class PipelineController {
 
     // MARK: - Akış
 
-    private func begin(with url: URL, apiKey: String) {
+    private func begin(with url: URL, kind: MediaKind, apiKey: String) {
         task?.cancel()
-        videoURL = url
+        inputURL = url
+        inputKind = kind
         content = nil
         tokenUsage = .zero
         errorMessage = nil
         warnings = []
         writtenFiles = []
-        videoDurationSeconds = 0
-        steps = ProcessingStep.allCases.map { ProcessingStepStatus(step: $0) }
+        durationSeconds = 0
+        steps = ProcessingStep.allCases.map { step in
+            var status = ProcessingStepStatus(step: step)
+            status.mediaKind = kind
+            return status
+        }
         phase = .processing
 
         task = Task { [weak self] in
-            await self?.run(video: url, apiKey: apiKey)
+            await self?.run(source: url, kind: kind, apiKey: apiKey)
         }
     }
 
-    private func run(video url: URL, apiKey: String) async {
+    private func run(source url: URL, kind: MediaKind, apiKey: String) async {
         do {
             // 1) Hazırlık
             update(.prepare, state: .active, detail: "Araçlar kontrol ediliyor")
@@ -122,20 +128,20 @@ final class PipelineController {
                     "Whisper modeli bulunamadı: \(ToolLocator.expectedModelURL.path)\n\(ToolLocator.modelDownloadCommand)"
                 )
             }
-            let duration = Int((try await AudioExtractor.videoDuration(at: url)).rounded())
-            videoDurationSeconds = duration
-            update(.prepare, state: .done, detail: String(format: "%.0f saniyelik video", Double(duration)))
+            let duration = Int((try await AudioExtractor.duration(of: url)).rounded())
+            durationSeconds = duration
+            update(.prepare, state: .done, detail: String(format: "%.0f saniyelik %@", Double(duration), kind.label))
 
-            // 2) Ses çıkarma
+            // 2) Ses çıkarma / dönüştürme
             update(.extractAudio, state: .active, detail: "ffmpeg çalışıyor")
             let workDirectory = try AppPaths.makeWorkDirectory()
             defer { try? FileManager.default.removeItem(at: workDirectory) }
             let audio = try await AudioExtractor.extractAudio(from: url, into: workDirectory) { [weak self] progress in
                 Task { @MainActor in
-                    self?.update(.extractAudio, state: .active, detail: "Ses çıkarılıyor", progress: progress)
+                    self?.update(.extractAudio, state: .active, detail: kind == .audio ? "Ses dönüştürülüyor" : "Ses çıkarılıyor", progress: progress)
                 }
             }
-            update(.extractAudio, state: .done, detail: "Ses hazır")
+            update(.extractAudio, state: .done, detail: kind == .audio ? "Ses hazır" : "Ses hazır")
 
             // 3) Yazıya çevirme
             update(.transcribe, state: .active, detail: "Yerel yapay zekâ modeli çalışıyor")
@@ -152,7 +158,7 @@ final class PipelineController {
             let generated = try await generator.generate(
                 segments: segments,
                 videoDuration: duration,
-                videoName: url.lastPathComponent
+                sourceName: url.lastPathComponent
             ) { [weak self] detail in
                 Task { @MainActor in
                     self?.update(.generateText, state: .active, detail: detail)
@@ -164,7 +170,7 @@ final class PipelineController {
             update(.generateText, state: .done, detail: "Metinler hazır")
 
             // 5) Dosyalar
-            update(.saveFiles, state: .active, detail: "Videonun klasörüne yazılıyor")
+            update(.saveFiles, state: .active, detail: "Dosyanın klasörüne yazılıyor")
             do {
                 writtenFiles = try FileExporter.export(generated, nextTo: url)
                 update(.saveFiles, state: .done, detail: "\(writtenFiles.count) dosya kaydedildi")
@@ -189,9 +195,9 @@ final class PipelineController {
         phase = .failed
     }
 
-    /// Başarısız bir işlemden sonra aynı videoyu tekrar dener.
+    /// Başarısız bir işlemden sonra aynı dosyayı tekrar dener.
     func retry() {
-        guard let url = videoURL else { return }
+        guard let url = inputURL else { return }
         start(with: url)
     }
 
@@ -200,13 +206,14 @@ final class PipelineController {
         task?.cancel()
         task = nil
         phase = .idle
-        videoURL = nil
+        inputURL = nil
+        inputKind = nil
         content = nil
         tokenUsage = .zero
         errorMessage = nil
         warnings = []
         writtenFiles = []
-        videoDurationSeconds = 0
+        durationSeconds = 0
         steps = ProcessingStep.allCases.map { ProcessingStepStatus(step: $0) }
     }
 

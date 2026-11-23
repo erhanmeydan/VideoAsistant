@@ -2,24 +2,24 @@ import Foundation
 
 /// `--transcribe` komutu: ses çıkarma ve yerel yazıya çevirme adımlarını çalıştırır.
 enum TranscribeRunner {
-    static func run(videoPath: String) async -> Int32 {
-        let videoURL = URL(fileURLWithPath: videoPath)
-        guard FileManager.default.fileExists(atPath: videoURL.path) else {
-            print("HATA: Video bulunamadı: \(videoURL.path)")
+    static func run(sourcePath: String) async -> Int32 {
+        let sourceURL = URL(fileURLWithPath: sourcePath)
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            print("HATA: Dosya bulunamadı: \(sourceURL.path)")
             return 1
         }
 
         print("== Ses çıkarma + yerel yazıya çevirme ==")
-        print("Video: \(videoURL.lastPathComponent)")
+        print("Giriş: \(sourceURL.lastPathComponent)")
 
         do {
-            let duration = try await AudioExtractor.videoDuration(at: videoURL)
+            let duration = try await AudioExtractor.duration(of: sourceURL)
             print(String(format: "Süre: %.1f sn", duration))
 
             let workDirectory = try AppPaths.makeWorkDirectory()
             defer { try? FileManager.default.removeItem(at: workDirectory) }
 
-            let audio = try await AudioExtractor.extractAudio(from: videoURL, into: workDirectory) { progress in
+            let audio = try await AudioExtractor.extractAudio(from: sourceURL, into: workDirectory) { progress in
                 let percent = Int(progress * 100)
                 print("  ses çıkarma: %\(percent)")
             }

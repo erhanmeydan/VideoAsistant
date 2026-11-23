@@ -23,6 +23,15 @@ enum ProcessingStep: Int, CaseIterable, Identifiable {
         }
     }
 
+    /// Giriş türüne göre ad (ses dosyasında "çıkarma" yerine "dönüştürme" denir).
+    func title(for kind: MediaKind?) -> String {
+        switch (self, kind) {
+        case (.prepare, .audio): return "Ses kaydı hazırlanıyor"
+        case (.extractAudio, .audio): return "Ses dönüştürülüyor"
+        default: return title
+        }
+    }
+
     /// Adıma ait SF Symbol.
     var symbol: String {
         switch self {
@@ -50,6 +59,11 @@ struct ProcessingStepStatus: Identifiable {
     var detail: String = ""
     /// 0...1 arası ilerleme; nil ise belirsiz (spinner).
     var progress: Double?
+    /// İşlenen girişin türü; ad başlıklarını buna göre değiştirir.
+    var mediaKind: MediaKind?
 
     var id: Int { step.rawValue }
+
+    /// Ekranda gösterilecek ad.
+    var displayTitle: String { step.title(for: mediaKind) }
 }

@@ -95,9 +95,9 @@ enum PromptTemplates {
     Biçim: {"description": "paragraflar", "titles": ["..."], "tags": ["..."]}
     """
 
-    static func metadataUser(transcript: String, videoName: String, videoDuration: Int) -> String {
+    static func metadataUser(transcript: String, sourceName: String, videoDuration: Int) -> String {
         """
-        Video dosya adı: \(videoName)
+        Dosya adı: \(sourceName)
         Video süresi: \(videoDuration) saniye
 
         Döküş:
