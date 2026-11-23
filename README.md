@@ -9,12 +9,14 @@ Türkçe YouTube videoları için **altyazı (SRT), bölüm başlıkları, açı
 Video döküşü (Whisper) tamamen **yerelde** çalışır; ağa sadece düzeltilmiş metinler gider.
 
 ```
-mp4 / mov  →  ffmpeg (ses)  →  whisper.cpp (yerel Türkçe döküş)  →  MiniMax M3.1 Flash  →  5 sekme + 5 dosya
+video / ses  →  ffmpeg (16 kHz mono)  →  whisper.cpp (yerel Türkçe döküş)  →  MiniMax M3.1 Flash  →  5 sekme + 5 dosya
 ```
 
 ## Özellikler
 
-- Pencereye mp4/mov **sürükle-bırak** (veya "Dosya seç")
+- Pencereye video veya ses dosyası **sürükle-bırak** (veya "Dosya seç")
+- Desteklenen biçimler: video MP4/MOV/M4V · ses MP3/WAV/M4A/AAC/FLAC/OGG/OPUS/AIFF/WMA
+- Ses dosyasında "Ses çıkarılıyor" yerine "Ses dönüştürülüyor" adımı görünür
 - Aynı pencerede canlı adım listesi: ses çıkarma → yazıya çevirme → metin hazırlama → dosya kaydetme
 - **Zaman damgaları korunur**: LLM yalnızca metni düzeltir, zamanlama Whisper çıktısından gelir
 - YouTube bölüm başlıkları: ilk bölüm `00:00`, en az 3 bölüm, bölümler arası en az 10 saniye
